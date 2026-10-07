@@ -1,0 +1,112 @@
+:root {
+  --accent: #8fcfbf;
+  --second: #f3b4c4;
+  --text: #3d3a4b;
+  --muted: #8e899c;
+  --paper: #ffffff;
+  --bg: color-mix(in oklch, var(--accent) 16%, #fffbf6);
+  --tint: color-mix(in oklch, var(--accent) 20%, white);
+  --pastel: color-mix(in oklch, var(--accent) 58%, white);
+  --pastel-edge: color-mix(in oklch, var(--accent) 82%, #6e6880);
+  --deep: color-mix(in oklch, var(--accent) 42%, #2c2838);
+  --line: color-mix(in oklch, var(--accent) 14%, #ece9f1);
+  --line-edge: color-mix(in oklch, var(--accent) 22%, #dcd8e4);
+  --second-pastel: color-mix(in oklch, var(--second) 55%, white);
+  --hole: color-mix(in oklch, var(--accent) 22%, #e4e0ea);
+  --coil: color-mix(in oklch, var(--accent) 70%, white);
+  --shadow:color-mix(in oklch, var(--accent) 30%, #3a3150);
+  --display: 'Modak', 'Fredoka', system-ui, sans-serif;
+  --font: 'Fredoka', system-ui, sans-serif;
+  --step--1: 0.9rem;
+  --step-0: 1.05rem;
+  --step-1: 1.2rem;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--step-0);
+  line-height: 1.45;
+  transition: background-color 0.6s ease;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 3px solid var(--pastel-edge);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.slot {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 3.3rem;
+  padding: 0 0.7rem 0 1rem;
+  border: 2px solid var(--line);
+  box-shadow: 0 3px 0 var(--line);
+  border-radius: 16px;
+  background-color: var(--paper);
+  font-size: var(--step-1);
+  font-weight: 600;
+  color: var(--text);
+  --reel-h: calc(3.3rem - 6px);
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.paper {
+  position: relative;
+  padding: 46px 6% 6%;
+  background: var(--paper);
+}
+
+.paper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 22px;
+  right: 22px;
+  height: 44px;
+  background-image: radial-gradient(circle at 50% 22px, var(--hole) 0 5px, transparent 5.6px);
+  background-size: 30px 44px;
+  background-repeat: space no-repeat;
+}
+
+.paper img,
+.paper svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 3px;
+}
