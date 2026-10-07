@@ -45,21 +45,30 @@
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolveColor(background, '#fffbf6'))
   })
 
-  const previews = new Map<string, string>()
+  let previews = new Map<StyleId, string>()
+  let previewsKey = ''
 
   function preview(style: StyleId): string {
-    const key = `${style}|${combo.palette.theme.id}|${combo.seeds.colors}|${app.outlines}`
-    const cached = previews.get(key)
+    const key = `${combo.palette.theme.id}|${combo.seeds.colors}|${app.outlines}`
+    if (key !== previewsKey) {
+      previews = new Map()
+      previewsKey = key
+    }
+    const cached = previews.get(style)
     if (cached) return cached
     const svg = renderArt(combine({ ...combo.seeds, layout: 424242, motif: 7 }, style, combo.palette.theme.id), app.outlines)
-    previews.set(key, svg)
+    previews.set(style, svg)
     return svg
   }
 
-  const swatchesOf = (theme: PaletteTheme) => {
-    const sample = paletteFrom(theme, rngFor(0, 5))
-    return [sample.line, ...sample.colors, sample.background]
-  }
+  const swatchesById = new Map(
+    paletteThemes.map((theme) => {
+      const sample = paletteFrom(theme, rngFor(0, 5))
+      return [theme.id, [sample.line, ...sample.colors, sample.background]]
+    }),
+  )
+
+  const swatchesOf = (theme: PaletteTheme) => swatchesById.get(theme.id) ?? []
 
   let squeezing = $state(false)
   let spins = $state(0)
