@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://doodles-9g9.pages.dev/sitemap.xml

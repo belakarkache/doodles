@@ -17,7 +17,7 @@
 </script>
 
 <li class:locked>
-  <h3>{label}</h3>
+  <h2>{label}</h2>
   <div class="line">
     <div class="slot-area">
       {@render slot()}
@@ -36,7 +36,7 @@
     gap: 0.4rem;
   }
 
-  h3 {
+  h2 {
     margin: 0;
     padding-left: 0.25rem;
     font-size: var(--step--1);
