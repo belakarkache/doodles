@@ -87,8 +87,11 @@ export function nudge(hex: string, rng: () => number, spread: Spread): string {
   })
 }
 
+let probe: CanvasRenderingContext2D | null | undefined
+
 export function resolveColor(css: string, fallback: string): string {
-  const context = document.createElement('canvas').getContext('2d')
+  probe ??= document.createElement('canvas').getContext('2d', { willReadFrequently: true })
+  const context = probe
   if (!context) return fallback
   context.fillStyle = fallback
   context.fillStyle = css
