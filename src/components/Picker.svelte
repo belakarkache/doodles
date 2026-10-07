@@ -30,7 +30,12 @@
 
   function toggle() {
     open = !open
-    if (open) requestAnimationFrame(() => list?.querySelector<HTMLButtonElement>('[aria-selected="true"], button')?.focus())
+    if (open) requestAnimationFrame(focusSelected)
+  }
+
+  function focusSelected() {
+    const selectedOption = list?.querySelector<HTMLButtonElement>('[aria-selected="true"]') ?? list?.querySelector<HTMLButtonElement>('button')
+    selectedOption?.focus()
   }
 
   function pick(id: string | null) {
