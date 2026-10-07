@@ -1,10 +1,8 @@
-import { fmt, pt, vec, type Vec } from '../../geometry'
+import { fmt, pt, TAU, vec, type Vec } from '../../geometry'
 import { between, intBetween, pick, shuffle } from '../../random'
 import { color, HEIGHT, WIDTH, type ArtContext } from '../context'
 import { bulge, circleD, clipPath, clipped, fill, ink, loopsD, polyD, range, rect, regions, sunburst, type Art } from '../draw'
 import { eye as eyeShape, lips as lipsShape, motifShapes, mushroom } from '../shapes'
-
-const TAU = Math.PI * 2
 
 function sparkleAt(ctx: ArtContext, x: number, y: number, r: number, fillColor: string): string {
   return ink(polyD(motifShapes.sparkle(ctx.rng, x, y, r)), ctx.pens.line, 3.4, fillColor)

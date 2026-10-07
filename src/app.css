@@ -14,7 +14,7 @@
   --second-pastel: color-mix(in oklch, var(--second) 55%, white);
   --hole: color-mix(in oklch, var(--accent) 22%, #e4e0ea);
   --coil: color-mix(in oklch, var(--accent) 70%, white);
-  --shadow:color-mix(in oklch, var(--accent) 30%, #3a3150);
+  --shadow: color-mix(in oklch, var(--accent) 30%, #3a3150);
   --display: 'Modak', 'Fredoka', system-ui, sans-serif;
   --font: 'Fredoka', system-ui, sans-serif;
   --step--1: 0.9rem;

@@ -1,8 +1,6 @@
 import { contourLoops, dropSpecks, sampleField, simplifyLoop, smoothLoop, type Field } from '../contours'
-import { fmt, polylinePath, type Vec } from '../geometry'
+import { fmt, polylinePath, TAU, type Vec } from '../geometry'
 import { HEIGHT, LINE, WIDTH } from './context'
-
-const TAU = Math.PI * 2
 
 export const polyD = (points: Vec[]) => polylinePath(points, true)
 export const loopsD = (loops: Vec[][]) => loops.map(polyD).join(' ')

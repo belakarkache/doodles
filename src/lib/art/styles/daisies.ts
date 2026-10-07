@@ -1,9 +1,8 @@
-import { add, clipHalfPlane, distance, dot, fromAngle, lerp, normalize, perpendicular, poissonPoints, scale, sub, vec, voronoiCells, type Vec } from '../../geometry'
+import { add, clipHalfPlane, distance, dot, fromAngle, lerp, normalize, perpendicular, poissonPoints, scale, sub, TAU, vec, voronoiCells, type Vec } from '../../geometry'
 import { between, intBetween, pick, type Rng } from '../../random'
 import { HEIGHT, WIDTH, type ArtContext } from '../context'
 import { fill, polyD, type Art } from '../draw'
 
-const TAU = Math.PI * 2
 const BLEED = 12
 
 type Bloom = { cell: Vec[]; center: Vec; core: number; petals: number }

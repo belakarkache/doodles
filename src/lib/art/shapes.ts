@@ -1,8 +1,6 @@
-import { catmullRom, vec, type Vec } from '../geometry'
+import { catmullRom, TAU, vec, type Vec } from '../geometry'
 import { between, intBetween, type Rng } from '../random'
 import type { MotifId } from '../data/motifs'
-
-const TAU = Math.PI * 2
 
 type ShapeMaker = (rng: Rng, cx: number, cy: number, r: number) => Vec[]
 

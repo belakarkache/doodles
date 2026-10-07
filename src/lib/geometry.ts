@@ -1,3 +1,5 @@
+export const TAU = Math.PI * 2
+
 export type Vec = { x: number; y: number }
 
 export const vec = (x: number, y: number): Vec => ({ x, y })

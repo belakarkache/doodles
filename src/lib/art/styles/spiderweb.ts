@@ -1,9 +1,8 @@
-import { add, fromAngle, lerp, polylinePath, scale, sub, vec, type Vec } from '../../geometry'
+import { add, fromAngle, lerp, polylinePath, scale, sub, TAU, vec, type Vec } from '../../geometry'
 import { between, intBetween } from '../../random'
 import { color, HEIGHT, WIDTH, type ArtContext } from '../context'
 import { fill, ink, polyD, type Art } from '../draw'
 
-const TAU = Math.PI * 2
 const STRAND_SAMPLES = 10
 const REACH = 560
 

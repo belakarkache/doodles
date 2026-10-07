@@ -1,4 +1,4 @@
-import { add, catmullRom, fromAngle, lerp, normalize, perpendicular, scale, sub, vec, type Vec } from '../../geometry'
+import { add, catmullRom, fromAngle, lerp, normalize, perpendicular, scale, sub, TAU, vec, type Vec } from '../../geometry'
 import { between, intBetween, pick, type Rng } from '../../random'
 import { HEIGHT, WIDTH, type ArtContext } from '../context'
 import { fill, ink, polyD, type Art } from '../draw'
@@ -6,7 +6,6 @@ import type { Hand } from '../hand'
 import { luminance } from '../../theme'
 import { motifShapes } from '../shapes'
 
-const TAU = Math.PI * 2
 const LINE = 3
 
 type Cell = { i: number; j: number; center: Vec; size: number; even: boolean }
