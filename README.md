@@ -2,7 +2,7 @@
 
 A doodle page idea generator for sketchbooks. Roll a style, a color palette and a motif, and get a sketch drawn on the fly to use as a starting point.
 
-**Live demo:** [doodles](https://doodles-9g9.pages.dev/)
+**Live demo:** [doodles](https://doodlesapp.pages.dev/)
 
 ![Doodles preview](docs/preview.png)
 
