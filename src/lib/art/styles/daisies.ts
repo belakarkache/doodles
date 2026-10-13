@@ -4,6 +4,7 @@ import { HEIGHT, WIDTH, type ArtContext } from '../context'
 import { fill, polyD, type Art } from '../draw'
 
 const BLEED = 12
+const ROW = 90
 
 type Bloom = { cell: Vec[]; center: Vec; core: number; petals: number }
 
@@ -99,11 +100,13 @@ export function daisies(ctx: ArtContext): Art {
   const { blooms, roundness } = pick(rng, ['grid', 'packed']) === 'grid' ? gridBlooms(rng, gap) : packedBlooms(rng, gap)
   const cream = ctx.outlines !== 'none' && rng() < 0.5
   const petalColors = pens.colors.filter((c) => c !== pens.line)
-  const tint = (i: number) => petalColors[i % petalColors.length]
-  const body = blooms.map((bloom, f) => {
+  const row = (bloom: Bloom) => Math.floor(bloom.center.y / ROW)
+  const ordered = [...blooms].sort((a, b) => row(a) - row(b) || a.center.x - b.center.x)
+  const tint = (f: number, k = 0) => petalColors[(ctx.rhythm(petalColors.length, f) + k) % petalColors.length]
+  const body = ordered.map((bloom, f) => {
     const petals = petalShapes(rng, bloom, gap).map((shape) => polyD(hand.points(rounded(shape, roundness))))
     const petalColor = cream ? pens.background : tint(f)
-    const coreColor = cream ? tint(f) : tint(f + 2)
+    const coreColor = cream ? tint(f) : tint(f, 2)
     return fill(petals.join(' '), petalColor) + fill(polyD(hand.points(circle(bloom.center, bloom.core))), coreColor)
   })
   return { background: ctx.outlines === 'none' ? pens.background : pens.line, body: body.join('') }

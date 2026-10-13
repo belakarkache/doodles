@@ -1,6 +1,6 @@
 import { fmt, lerp, vec, type Vec } from '../../geometry'
 import { between, pick } from '../../random'
-import { color, HEIGHT, WIDTH, type ArtContext } from '../context'
+import { HEIGHT, tone, WIDTH, type ArtContext } from '../context'
 import { fill, ink, type Art } from '../draw'
 
 type Lens = { x: number; y: number; diagonal: number }
@@ -38,7 +38,7 @@ export function onion(ctx: ArtContext): Art {
     for (let k = 0; k < count; k++) {
       const a = curve(lens, k / count)
       const b = curve(lens, (k + 1) / count)
-      parts.push(fill(`${a.forward} ${b.backward} Z`, color(ctx, lens.diagonal + k)))
+      parts.push(fill(`${a.forward} ${b.backward} Z`, tone(ctx, pens.colors, lens.diagonal + k)))
     }
     for (let k = 0; k <= count; k++) parts.push(ink(curve(lens, k / count).forward, pens.line, 4.2))
     return parts.join('')

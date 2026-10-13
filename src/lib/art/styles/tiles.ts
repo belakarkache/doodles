@@ -1,6 +1,6 @@
 import { add, catmullRom, fromAngle, lerp, normalize, perpendicular, scale, sub, TAU, vec, type Vec } from '../../geometry'
 import { between, intBetween, pick, type Rng } from '../../random'
-import { HEIGHT, WIDTH, type ArtContext } from '../context'
+import { HEIGHT, WIDTH, type ArtContext, type Rhythm } from '../context'
 import { fill, ink, polyD, type Art } from '../draw'
 import type { Hand } from '../hand'
 import { luminance } from '../../theme'
@@ -10,7 +10,7 @@ const LINE = 3
 
 type Cell = { i: number; j: number; center: Vec; size: number; even: boolean }
 
-type Painter = { hand: Hand; line: string; outlined: boolean }
+type Painter = { hand: Hand; line: string; outlined: boolean; rhythm: Rhythm }
 
 function grid(rng: Rng): Cell[] {
   const size = between(rng, 54, 72)
@@ -101,7 +101,9 @@ function daisy(painter: Painter, center: Vec, s: number, petals: string, core: s
   return shape(painter, roundFlower(center, s * 0.43, 5, tilt), petals) + shape(painter, circle(center, s * 0.15), core)
 }
 
-const at = <T>(items: T[], { i, j }: Cell, k = 0): T => items[(i + j * 12 + k) % items.length]
+const at = <T>(painter: Painter, items: T[], { i, j }: Cell, k = 0): T => items[(painter.rhythm(items.length, i, j) + k) % items.length]
+
+const halved = (cell: Cell): Cell => ({ ...cell, i: (cell.i + cell.j) >> 1, j: (cell.i - cell.j) >> 1 })
 
 function checkerboard(painter: Painter, cells: Cell[], tileColor: (cell: Cell) => string | null): string {
   return cells
@@ -116,7 +118,7 @@ function sprigs(painter: Painter, cells: Cell[], light: string, dark: string, ti
   const tiles = checkerboard(painter, cells, (cell) => (cell.even ? dark : null))
   const motifs = cells.map((cell) => {
     const { center, size, even } = cell
-    const tint = at(tints, cell)
+    const tint = at(painter, tints, cell)
     return even ? daisy(painter, center, size, light, tint, -Math.PI / 2) : sprig(painter, center, size, tint)
   })
   return tiles + motifs.join('')
@@ -127,7 +129,7 @@ function inverted(rng: Rng, painter: Painter, cells: Cell[], light: string, dark
   const tiles = checkerboard(painter, cells, (cell) => (cell.even ? dark : null))
   const flowers = cells.map((cell) => {
     const { center, size, even } = cell
-    const [bloom, ground] = even ? [light, dark] : [at(tints, cell), light]
+    const [bloom, ground] = even ? [light, dark] : [at(painter, tints, halved(cell)), light]
     return shape(painter, wonkyFlower(rng, center, size * 0.4, petals), bloom) + shape(painter, circle(center, size * 0.05, 16), ground)
   })
   return tiles + flowers.join('')
@@ -156,9 +158,9 @@ function sparse(rng: Rng, painter: Painter, cells: Cell[], darks: string[], colo
     .filter((cell) => cell.even)
     .map((cell) => {
       const { center, size } = cell
-      const petals = at(colors, cell)
+      const petals = at(painter, colors, halved(cell))
       if (hearts) return shape(painter, motifShapes.heart(rng, center.x, center.y + size * 0.03, size * 0.24), petals)
-      const core = at(colors, cell, 1)
+      const core = at(painter, colors, halved(cell), 1)
       return daisy(painter, center, size * 0.85, petals, core, between(rng, 0, TAU))
     })
   return tiles + motifs.join('')
@@ -168,7 +170,7 @@ function circles(painter: Painter, cells: Cell[], light: string, colors: string[
   return cells
     .map((cell) => {
       const { center, size, even } = cell
-      const tint = (k: number) => at(colors, cell, k)
+      const tint = (k: number) => at(painter, colors, cell, k)
       const leafy = colors.length > 2 ? 2 : 1
       const disc = shape(painter, circle(center, size * 0.47), tint(0))
       if (even) return disc + daisy(painter, center, size * 0.82, light, tint(1), -Math.PI / 2)
@@ -186,7 +188,7 @@ function circles(painter: Painter, cells: Cell[], light: string, colors: string[
 
 export function tiles(ctx: ArtContext): Art {
   const { rng, pens } = ctx
-  const painter: Painter = { hand: ctx.hand.softer(0.3), line: pens.line, outlined: ctx.outlines !== 'none' }
+  const painter: Painter = { hand: ctx.hand.softer(0.3), line: pens.line, outlined: ctx.outlines !== 'none', rhythm: ctx.rhythm }
   const light = pens.background
   const contrast = (c: string) => Math.abs(luminance(c) - luminance(light))
   const ranked = pens.colors.filter((c) => c !== pens.line && c !== light).sort((a, b) => contrast(b) - contrast(a))

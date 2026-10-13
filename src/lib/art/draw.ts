@@ -1,5 +1,5 @@
 import { contourLoops, dropSpecks, nestLoops, sampleField, simplifyLoop, smoothLoop, type Field } from '../contours'
-import { fmt, polylinePath, TAU, type Vec } from '../geometry'
+import { fmt, polylinePath, TAU, vec, type Vec } from '../geometry'
 import { HEIGHT, LINE, WIDTH } from './context'
 
 export const polyD = (points: Vec[]) => polylinePath(points, true)
@@ -60,10 +60,31 @@ function fillGroups(groups: string[][], colors: string[]): string {
   return groups.map((group, k) => (group.length > 0 ? fill(group.join(' '), colors[k]) : '')).join('')
 }
 
-export function paint(rng: () => number, loops: Vec[][], colors: string[]): string {
-  const groups = colors.map(() => [] as string[])
-  for (const shape of nestLoops(loops)) groups[Math.floor(rng() * colors.length)].push(loopsD(shape))
-  return fillGroups(groups, colors)
+function middle(loop: Vec[]): Vec {
+  let x = 0
+  let y = 0
+  for (const p of loop) {
+    x += p.x
+    y += p.y
+  }
+  return vec(x / loop.length, y / loop.length)
+}
+
+export function paint(loops: Vec[][], colorAt: (at: Vec) => string): string {
+  const groups = new Map<string, string[]>()
+  for (const shape of nestLoops(loops)) {
+    const color = colorAt(middle(shape[0]))
+    const group = groups.get(color)
+    if (group) group.push(loopsD(shape))
+    else groups.set(color, [loopsD(shape)])
+  }
+  return [...groups].map(([color, d]) => fill(d.join(' '), color)).join('')
+}
+
+export const onCell = (u: number, v: number): [number, number] => {
+  const i = Math.floor(u)
+  const j = Math.floor(v)
+  return [Math.floor((i + j) / 2), Math.floor((i - j) / 2)]
 }
 
 export function sunburst(cx: number, cy: number, rays: number, colors: string[]): string {

@@ -1,6 +1,6 @@
 import { fmt, pt, TAU, vec, type Vec } from '../../geometry'
 import { between, intBetween, pick, shuffle } from '../../random'
-import { color, HEIGHT, spectrum, WIDTH, type ArtContext } from '../context'
+import { color, HEIGHT, spectrum, tone, WIDTH, type ArtContext } from '../context'
 import { bulge, circleD, clipPath, clipped, fill, ink, loopsD, paint, polyD, range, rect, regions, sunburst, type Art } from '../draw'
 import { eye as eyeShape, lips as lipsShape, motifShapes, mushroom } from '../shapes'
 
@@ -19,8 +19,10 @@ function backdrop(ctx: ArtContext, focusY: number): string {
   }
   const period = between(rng, 24, 30)
   const amp = between(rng, 6, 12)
-  const field = ctx.hand.field((x, y) => Math.sin(((y + amp * Math.sin(x * 0.03)) / period) * Math.PI))
-  return paint(rng, regions(field), spectrum(ctx, 3))
+  const band = (x: number, y: number) => (y + amp * Math.sin(x * 0.03)) / period
+  const field = ctx.hand.field((x, y) => Math.sin(band(x, y) * Math.PI))
+  const colors = spectrum(ctx, 3)
+  return paint(regions(field), ({ x, y }) => tone(ctx, colors, Math.floor(band(x, y) / 2)))
 }
 
 function capPattern(ctx: ArtContext, cx: number, cy: number, r: number, base: string, accent: string): string {

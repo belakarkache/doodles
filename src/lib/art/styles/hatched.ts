@@ -1,6 +1,6 @@
 import { add, dot, fromAngle, lerp, normalize, perpendicular, polylinePath, sub, vec, type Vec } from '../../geometry'
 import { between, intBetween, pick, type Rng } from '../../random'
-import { HEIGHT, WIDTH, type ArtContext } from '../context'
+import { HEIGHT, tone, WIDTH, type ArtContext } from '../context'
 import { fill, hatch, ink, polyD, type Art } from '../draw'
 import type { Hand } from '../hand'
 import { contrastRatio } from '../../theme'
@@ -85,12 +85,12 @@ function trianglePieces(layout: 'halves' | 'split' | 'quarters', [a, b, c, d]: V
   ]
 }
 
-function triangles(rng: Rng, painter: Painter, cells: Cell[], turn: (cell: Cell) => number, tones: () => Tones): string {
+function triangles(rng: Rng, painter: Painter, cells: Cell[], turn: (cell: Cell) => number, tones: (cell: Cell) => Tones): string {
   const layout = pick(rng, ['halves', 'split', 'quarters'] as const)
   const edge = intBetween(rng, 0, 2)
   return cells
     .map((cell) => {
-      const tone = tones()
+      const tone = tones(cell)
       const corners = painter.hand.points(turned(cell.corners, turn(cell)))
       return trianglePieces(layout, corners)
         .map(({ points, kind }) => {
@@ -109,7 +109,7 @@ function arc(center: Vec, r: number, start: number, samples: number): Vec[] {
   return Array.from({ length: samples + 1 }, (_, k) => add(center, fromAngle(start + (k / samples) * (Math.PI / 2), r)))
 }
 
-function arcs(painter: Painter, cells: Cell[], turn: (cell: Cell) => number, tones: () => Tones): string {
+function arcs(painter: Painter, cells: Cell[], turn: (cell: Cell) => number, tones: (cell: Cell) => Tones): string {
   return cells
     .map((cell) => {
       const [a, b] = turned(cell.corners, turn(cell))
@@ -118,7 +118,7 @@ function arcs(painter: Painter, cells: Cell[], turn: (cell: Cell) => number, ton
       const disc = polyD(painter.hand.points([a, ...arc(a, cell.size, start, 24)]))
       const rings: Vec[][] = []
       for (let r = painter.gap; r < cell.size - painter.gap / 2; r += painter.gap) rings.push(painter.hand.points(arc(a, r, start, 16)))
-      return fill(square, painter.line) + fill(disc, tones().hatched) + hatch(linesD(rings), painter.line, STROKE) + outline(painter, disc)
+      return fill(square, painter.line) + fill(disc, tones(cell).hatched) + hatch(linesD(rings), painter.line, STROKE) + outline(painter, disc)
     })
     .join('')
 }
@@ -136,10 +136,10 @@ export function hatched(ctx: ArtContext): Art {
   const legible = ranked.filter((c) => contrast(c) >= 2.5)
   const colors = legible.length >= 2 ? legible : ranked.slice(0, 2)
   const mono = rng() < 0.15
-  const tones = (): Tones => {
-    if (mono) return { hatched: paper, solid: pick(rng, colors) }
-    const hatchedTone = pick(rng, colors)
-    return { hatched: hatchedTone, solid: pick(rng, ranked.filter((c) => c !== hatchedTone).concat(paper)) }
+  const tones = ({ i, j }: Cell): Tones => {
+    if (mono) return { hatched: paper, solid: tone(ctx, colors, i, j) }
+    const hatchedTone = tone(ctx, colors, i, j)
+    return { hatched: hatchedTone, solid: tone(ctx, ranked.filter((c) => c !== hatchedTone).concat(paper), i, j) }
   }
   const cells = grid(rng)
   const turn = turnRule(rng)

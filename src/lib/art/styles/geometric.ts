@@ -1,6 +1,6 @@
 import { add, fromAngle, poissonPoints, TAU, vec, type Vec } from '../../geometry'
 import { between, intBetween, pick, shuffle, type Rng } from '../../random'
-import { HEIGHT, WIDTH, type ArtContext } from '../context'
+import { HEIGHT, WIDTH, type ArtContext, type Rhythm } from '../context'
 import { fill, ink, polyD, type Art } from '../draw'
 import type { Hand } from '../hand'
 
@@ -8,7 +8,7 @@ const LINE = 3
 const QUARTER = Math.PI / 2
 const LENS = Math.asin(0.45)
 
-type Painter = { hand: Hand; line: string; outlined: boolean }
+type Painter = { hand: Hand; line: string; outlined: boolean; rhythm: Rhythm }
 
 type Maker = (center: Vec, r: number, turn: number) => Vec[][]
 
@@ -85,8 +85,10 @@ function bauhaus(rng: Rng, painter: Painter, inks: string[], paper: string): str
   return tilted(rng, (pad) =>
     squareCells(rng, size, pad, false)
       .map(({ center, size, i, j }) => {
-        const back = ground ? pick(rng, [...inks, paper]) : paper
-        const front = pick(rng, inks.filter((c) => c !== back))
+        const backs = [...inks, paper]
+        const back = ground ? backs[painter.rhythm(backs.length, i, j)] : paper
+        const fronts = inks.filter((c) => c !== back)
+        const front = fronts[painter.rhythm(fronts.length, i, j)]
         const turn = turns ? intBetween(rng, 0, 3) * QUARTER : ((i + j) % 4) * QUARTER
         const tile = ground ? shape(painter, [box(size, size, center.x, center.y)], back) : ''
         return tile + shape(painter, makers[pick(rng, pool)](center, size * 0.42, turn), front)
@@ -119,7 +121,7 @@ function targets(rng: Rng, painter: Painter, inks: string[], paper: string): str
 function triangles(rng: Rng, painter: Painter, inks: string[], paper: string): string {
   const side = between(rng, 48, 72)
   const h = (side * Math.sqrt(3)) / 2
-  const rule = pick(rng, ['random', 'rows', 'diagonal', 'stars', 'pairs'] as const)
+  const rule = pick(rng, ['rhythm', 'rows', 'diagonal', 'stars', 'pairs'] as const)
   const colors = [...inks, ...(rng() < 0.5 ? [paper] : [])]
   const inner = rng() < 0.4
   return tilted(rng, (pad) => {
@@ -133,7 +135,7 @@ function triangles(rng: Rng, painter: Painter, inks: string[], paper: string): s
         const up = i % 2 === 0
         const points = up ? [vec(x, y + h), vec(x + side / 2, y), vec(x + side, y + h)] : [vec(x, y), vec(x + side, y), vec(x + side / 2, y + h)]
         const index = {
-          random: () => intBetween(rng, 0, colors.length - 1),
+          rhythm: () => painter.rhythm(colors.length, i, j),
           rows: () => j + (up ? 0 : 1),
           diagonal: () => Math.floor((i + j * 2) / 2),
           stars: () => (up ? 0 : 1 + ((Math.floor(i / 2) + j) % (colors.length - 1))),
@@ -160,7 +162,8 @@ function cubes(rng: Rng, painter: Painter, inks: string[]): string {
   for (let j = 0; j * r * 1.5 < HEIGHT + r * 2; j++) {
     for (let i = -1; i * w < WIDTH + w; i++) {
       const c = vec(i * w + (j % 2 ? w / 2 : 0), j * r * 1.5)
-      const [top, left, right] = fixed ? tones : shuffle(rng, inks)
+      const turn = fixed ? 0 : painter.rhythm(tones.length, i, j)
+      const [top, left, right] = [0, 1, 2].map((k) => tones[(k + turn) % tones.length])
       const at = (k: number) => add(c, fromAngle(-QUARTER + (k * TAU) / 6, r))
       parts.push(
         shape(painter, [[c, at(5), at(0), at(1)]], top),
@@ -179,7 +182,8 @@ function confetti(rng: Rng, painter: Painter, inks: string[]): string {
   return points
     .map((p) => {
       const center = vec(p.x - 20, p.y - 20)
-      return shape(painter, makers[pick(rng, pool)](center, gap * between(rng, 0.3, 0.45), between(rng, 0, TAU)), pick(rng, inks))
+      const color = inks[painter.rhythm(inks.length, Math.floor(p.x / gap), Math.floor(p.y / gap))]
+      return shape(painter, makers[pick(rng, pool)](center, gap * between(rng, 0.3, 0.45), between(rng, 0, TAU)), color)
     })
     .join('')
 }
@@ -200,14 +204,14 @@ function chevrons(rng: Rng, painter: Painter, inks: string[], paper: string): st
     const y = -amp + k * band
     const upper = xs.map((x) => vec(x, y + wave(x)))
     const lower = xs.map((x) => vec(x, y + band + wave(x))).reverse()
-    parts.push(shape(painter, [[...upper, ...lower].map(flip)], colors[k % colors.length]))
+    parts.push(shape(painter, [[...upper, ...lower].map(flip)], colors[painter.rhythm(colors.length, k)]))
   }
   return parts.join('')
 }
 
 export function geometric(ctx: ArtContext): Art {
   const { rng, pens } = ctx
-  const painter: Painter = { hand: ctx.hand.softer(0.3), line: pens.line, outlined: ctx.outlines !== 'none' }
+  const painter: Painter = { hand: ctx.hand.softer(0.3), line: pens.line, outlined: ctx.outlines !== 'none', rhythm: ctx.rhythm }
   const paper = pens.background
   const inks = pens.colors.filter((c) => c !== paper)
   const variant = pick(rng, ['bauhaus', 'targets', 'triangles', 'cubes', 'confetti', 'chevrons'] as const)

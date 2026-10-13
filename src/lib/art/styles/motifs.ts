@@ -1,5 +1,5 @@
 import { circleD, clipPath, clipped, fill, ink, levelLines, loopsD, polyD, range, rect, sunburst, type Art } from '../draw'
-import { color, HEIGHT, spectrum, WIDTH, type ArtContext } from '../context'
+import { color, HEIGHT, spectrum, tone, WIDTH, type ArtContext } from '../context'
 import { motifShapes, signedDistance } from '../shapes'
 import { vec } from '../../geometry'
 import { between, pick } from '../../random'
@@ -19,11 +19,11 @@ export function lines3d(ctx: ArtContext): Art {
   const levels = range(-40, HEIGHT + 60, between(rng, 14, 17))
   const lines = levelLines(field, levels)
   if (motif === 'flower' || rng() < 0.5) {
-    return { background: pens.background, body: lines.map((loops, k) => ink(loopsD(loops), color(ctx, k), 5.2)).join('') }
+    return { background: pens.background, body: lines.map((loops, k) => ink(loopsD(loops), tone(ctx, pens.colors, k), 5.2)).join('') }
   }
   const bands = levels.map((_, i) => {
     const k = levels.length - 1 - i
-    return fill(loopsD(lines[k]), k % 2 ? color(ctx, Math.floor(k / 2)) : pens.background)
+    return fill(loopsD(lines[k]), k % 2 ? tone(ctx, pens.colors, Math.floor(k / 2)) : pens.background)
   })
   return { background: pens.background, body: bands.join('') + ink(lines.flat().map(polyD).join(' '), pens.line, 3.8) }
 }

@@ -1,5 +1,5 @@
 import type { Combination } from '../generator'
-import { rngFor, shuffle, type Rng } from '../random'
+import { pick, rngFor, shuffle, type Rng } from '../random'
 import type { MotifId } from '../data/motifs'
 import { distance, isDark } from '../theme'
 import { handDrawn, type Hand } from './hand'
@@ -13,13 +13,38 @@ export type OutlineMode = 'ink' | 'color' | 'none'
 
 export type Pens = { background: string; line: string; colors: string[]; blackPen: boolean }
 
+export type Rhythm = (count: number, i: number, j?: number) => number
+
 export type ArtContext = {
   rng: Rng
   pens: Pens
+  rhythm: Rhythm
   motif: MotifId
   hand: Hand
   uid: string
   outlines: OutlineMode
+}
+
+const wrap = (k: number, n: number) => ((k % n) + n) % n
+
+const sequences: ((k: number, n: number) => number)[] = [
+  (k) => wrap(k, 2),
+  (k, n) => wrap(k, n),
+  (k, n) => {
+    const t = wrap(k, 2 * (n - 1))
+    return t < n ? t : 2 * (n - 1) - t
+  },
+  (k, n) => wrap(Math.floor(k / 2), n),
+  (k, n) => (wrap(k, 2) === 0 ? 0 : 1 + wrap(Math.floor(k / 2), n - 1)),
+]
+
+const lattices: ((i: number, j: number) => number)[] = [(i, j) => i + j, (i, j) => i - j, (i) => i, (_, j) => j]
+
+export function rhythmFor(combo: Combination): Rhythm {
+  const rng = rngFor(combo.seeds.colors, 59)
+  const sequence = pick(rng, sequences)
+  const lattice = pick(rng, lattices)
+  return (count, i, j) => (count < 2 ? 0 : sequence(Math.floor(j === undefined ? i : lattice(i, j)), count))
 }
 
 const rotate = (items: string[], by: number) => [...items.slice(by), ...items.slice(0, by)]
@@ -41,6 +66,7 @@ export function createContext(combo: Combination, uid: string, outlines: Outline
   return {
     rng,
     pens: pensFor(combo, outlines),
+    rhythm: rhythmFor(combo),
     motif: combo.motif?.id ?? 'blob',
     hand: handDrawn(rngFor(combo.seeds.layout, 13)),
     uid,
@@ -51,6 +77,10 @@ export function createContext(combo: Combination, uid: string, outlines: Outline
 export function color(ctx: ArtContext, index: number): string {
   const { colors } = ctx.pens
   return colors[((index % colors.length) + colors.length) % colors.length]
+}
+
+export function tone(ctx: ArtContext, colors: string[], i: number, j?: number): string {
+  return colors[ctx.rhythm(colors.length, i, j)]
 }
 
 export function spectrum(ctx: ArtContext, from: number): string[] {

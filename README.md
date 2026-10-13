@@ -4,7 +4,7 @@ A doodle page idea generator for sketchbooks. Roll a style, a color palette and 
 
 **Live demo:** [doodles](https://doodlesapp.pages.dev/)
 
-![Doodles preview](docs/preview.png)
+![Doodles demo: rolling pages, picking a style and a palette, switching outline modes and changing the language](docs/media/demo.gif)
 
 ## Why
 
@@ -20,6 +20,10 @@ I use art as therapy, and some days I don't want to spend energy deciding what t
 - **Adaptive theme**: the interface colors follow the current palette
 - **Keyboard friendly**: press `Space` to roll
 - **Bilingual**: Portuguese and English, detected from the browser language
+
+| Mushrooms · Neon highlighter | Spiderweb · Y2K | Onions · Risograph |
+| --- | --- | --- |
+| ![Mushrooms style with the Neon highlighter palette](docs/media/screenshot-mushrooms.png) | ![Spiderweb style with the Y2K palette](docs/media/screenshot-spiderweb.png) | ![Onions style with the Risograph palette](docs/media/screenshot-onions.png) |
 
 ## Tech stack
 
