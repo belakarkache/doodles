@@ -1,4 +1,4 @@
-# Doodles
+# <img src="public/favicon.svg" alt="" width="32" align="top"> Doodles
 
 A doodle page idea generator for sketchbooks. Roll a style, a color palette and a motif, and get a sketch drawn on the fly to use as a starting point.
 
