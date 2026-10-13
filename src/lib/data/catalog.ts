@@ -19,6 +19,7 @@ export type StyleId =
   | 'lips'
   | 'tiles'
   | 'hatched'
+  | 'geometric'
 
 export type Style = { id: StyleId; name: Text; hint: Text; motifs?: MotifId[] }
 
@@ -152,6 +153,14 @@ export const styles: Style[] = [
     hint: {
       pt: 'Uma grade de quadrados cortados em triângulos ou com um quarto de círculo num canto. Alterne peças pretas, hachuradas e de cor, girando as casas para formar cata-ventos ou ondas.',
       en: 'A grid of squares cut into triangles or with a quarter circle in one corner. Alternate black, hatched and colored pieces, turning the tiles to make pinwheels or waves.',
+    },
+  },
+  {
+    id: 'geometric',
+    name: { pt: 'Padrão geométrico', en: 'Geometric pattern' },
+    hint: {
+      pt: 'Formas geométricas repetidas pela página: casas com círculos, triângulos e cruzes, alvos, mosaico de triângulos, cubos, confete ou zigue-zague. Tudo chapado, alternando as cores.',
+      en: 'Geometric shapes repeated across the page: tiles with circles, triangles and crosses, targets, triangle mosaic, cubes, confetti or zigzags. All flat, alternating colors.',
     },
   },
   {

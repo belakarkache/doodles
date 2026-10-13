@@ -3,6 +3,7 @@ import type { Combination } from '../generator'
 import { createContext, HEIGHT, WIDTH, type ArtContext, type OutlineMode } from './context'
 import { withoutOutlines, type Art } from './draw'
 import { daisies } from './styles/daisies'
+import { geometric } from './styles/geometric'
 import { hatched } from './styles/hatched'
 import { lines3d, pop } from './styles/motifs'
 import { eye, lips, mushrooms } from './styles/objects'
@@ -32,6 +33,7 @@ const renderers: Record<StyleId, (ctx: ArtContext) => Art> = {
   lips,
   tiles,
   hatched,
+  geometric,
 }
 
 let counter = 0
