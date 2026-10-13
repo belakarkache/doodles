@@ -18,7 +18,7 @@ export function lines3d(ctx: ArtContext): Art {
   }
   const levels = range(-40, HEIGHT + 60, between(rng, 14, 17))
   const lines = levelLines(field, levels)
-  if (motif === 'flower' || rng() < 0.5) {
+  if (rng() < 0.5) {
     return { background: pens.background, body: lines.map((loops, k) => ink(loopsD(loops), tone(ctx, pens.colors, k), 5.2)).join('') }
   }
   const bands = levels.map((_, i) => {

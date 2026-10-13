@@ -73,10 +73,10 @@ const heart: ShapeMaker = (rng, cx, cy, r) => {
 }
 
 const sparkle: ShapeMaker = (rng, cx, cy, r) => {
-  const tilt = between(rng, -0.25, 0.25)
+  const tilt = between(rng, -0.12, 0.12) - Math.PI / 2
   const controls: [number, number][] = Array.from({ length: 8 }, (_, i) => [
     tilt + (i / 8) * TAU,
-    i % 2 ? r * 0.26 : r * (i % 4 ? 0.72 : 1) * jitter(rng, 0.08),
+    i % 2 ? r * 0.3 : r * (i % 4 ? 0.66 : 1) * jitter(rng, 0.05),
   ])
   return organic(cx, cy, controls, 8)
 }

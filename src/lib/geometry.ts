@@ -21,6 +21,20 @@ export function polylinePath(points: Vec[], closed = false): string {
   return `M${points.map(pt).join(' L')}${closed ? ' Z' : ''}`
 }
 
+export function ellipse(center: Vec, rx: number, ry = rx, samples = 48, turn = 0): Vec[] {
+  const c = Math.cos(turn)
+  const s = Math.sin(turn)
+  return Array.from({ length: samples }, (_, k) => {
+    const x = rx * Math.cos((k / samples) * TAU)
+    const y = ry * Math.sin((k / samples) * TAU)
+    return vec(center.x + x * c - y * s, center.y + x * s + y * c)
+  })
+}
+
+export function splitPolygon(polygon: Vec[], origin: Vec, normal: Vec): Vec[][] {
+  return [clipHalfPlane(polygon, origin, normal), clipHalfPlane(polygon, origin, scale(normal, -1))].filter((part) => part.length > 2)
+}
+
 export function clipHalfPlane(polygon: Vec[], origin: Vec, normal: Vec): Vec[] {
   const inside = (p: Vec) => dot(sub(p, origin), normal) <= 0
   const result: Vec[] = []

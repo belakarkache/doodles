@@ -1,9 +1,9 @@
 import { fmt, lerp, vec, type Vec } from '../../geometry'
 import { between, pick } from '../../random'
-import { HEIGHT, tone, WIDTH, type ArtContext } from '../context'
+import { HEIGHT, WIDTH, type ArtContext } from '../context'
 import { fill, ink, type Art } from '../draw'
 
-type Lens = { x: number; y: number; diagonal: number }
+type Lens = { x: number; y: number }
 
 export function onion(ctx: ArtContext): Art {
   const { rng, pens } = ctx
@@ -18,7 +18,7 @@ export function onion(ctx: ArtContext): Art {
   for (let j = -Math.ceil(620 / h); j <= Math.ceil(620 / h); j++) {
     for (let i = -Math.ceil(320 / w); i <= Math.ceil(320 / w); i++) {
       const column = 2 * i + (Math.abs(j) % 2)
-      lenses.push({ x: cx + (column * w) / 2, y: cy + (j * h) / 2, diagonal: (column - j) / 2 })
+      lenses.push({ x: cx + (column * w) / 2, y: cy + (j * h) / 2 })
     }
   }
 
@@ -33,12 +33,14 @@ export function onion(ctx: ArtContext): Art {
     }
   }
 
+  const inks = pens.colors.filter((c) => c !== pens.line)
+  const layers = rng() < 0.5 ? inks.slice(0, 2) : inks.slice(0, Math.min(count, inks.length))
   const body = lenses.map((lens) => {
     const parts: string[] = []
     for (let k = 0; k < count; k++) {
       const a = curve(lens, k / count)
       const b = curve(lens, (k + 1) / count)
-      parts.push(fill(`${a.forward} ${b.backward} Z`, tone(ctx, pens.colors, lens.diagonal + k)))
+      parts.push(fill(`${a.forward} ${b.backward} Z`, layers[k % layers.length]))
     }
     for (let k = 0; k <= count; k++) parts.push(ink(curve(lens, k / count).forward, pens.line, 4.2))
     return parts.join('')

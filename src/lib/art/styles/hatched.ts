@@ -129,7 +129,7 @@ function outline(painter: Painter, d: string): string {
 
 export function hatched(ctx: ArtContext): Art {
   const { rng, pens } = ctx
-  const painter: Painter = { hand: ctx.hand.softer(0.25), line: pens.line, outlined: ctx.outlines !== 'none', gap: between(rng, 4.2, 5.4) }
+  const painter: Painter = { hand: ctx.hand.softer(0.25), line: pens.line, outlined: ctx.outlined, gap: between(rng, 4.2, 5.4) }
   const paper = pens.background
   const contrast = (c: string) => contrastRatio(c, pens.line)
   const ranked = pens.colors.filter((c) => c !== pens.line && c !== paper).sort((a, b) => contrast(b) - contrast(a))

@@ -20,6 +20,17 @@ export type StyleId =
   | 'tiles'
   | 'hatched'
   | 'geometric'
+  | 'tarsila'
+  | 'volpi'
+  | 'britto'
+  | 'athos'
+  | 'vangogh'
+  | 'mondrian'
+  | 'matisse'
+  | 'kandinsky'
+  | 'kusama'
+  | 'milhazes'
+  | 'haring'
 
 export type Style = { id: StyleId; name: Text; hint: Text; motifs?: MotifId[] }
 
@@ -56,7 +67,7 @@ export const styles: Style[] = [
       pt: 'Linhas retas que sobem ao passar pelo motivo, como se ele saltasse da página. Use uma caneta por linha ou pinte faixas alternadas.',
       en: 'Straight lines that lift as they cross the motif, as if it pops off the page. Use one pen per line or fill every other band.',
     },
-    motifs: ['heart', 'flower', 'blob'],
+    motifs: ['heart', 'eye', 'blob'],
   },
   {
     id: 'vase',
@@ -103,16 +114,16 @@ export const styles: Style[] = [
     id: 'groovy',
     name: { pt: 'Xadrez groovy', en: 'Groovy checkerboard' },
     hint: {
-      pt: 'Um xadrez ondulado na página toda e algumas margaridas grandes por cima. Sem contorno.',
-      en: 'A wavy checkerboard over the whole page with a few big daisies on top. No outlines.',
+      pt: 'Um xadrez ondulado de só duas cores na página toda e algumas margaridas grandes por cima. Sem contorno.',
+      en: 'A two-color wavy checkerboard over the whole page with a few big daisies on top. No outlines.',
     },
   },
   {
     id: 'interference',
     name: { pt: 'Anéis cruzados', en: 'Crossing rings' },
     hint: {
-      pt: 'Círculos concêntricos ao redor de dois centros. Onde eles se cruzam, alterne as duas cores como num xadrez.',
-      en: 'Concentric circles around two centers. Where they cross, alternate the two colors like a checkerboard.',
+      pt: 'Círculos concêntricos ao redor de dois centros. Onde eles se cruzam, alterne duas cores como num xadrez, cor sim, cor não. A linha pode ser escura ou da mesma cor de uma delas.',
+      en: 'Concentric circles around two centers. Where they cross, alternate two colors like a checkerboard, one on, one off. The line can be dark or match one of them.',
     },
   },
   {
@@ -127,8 +138,8 @@ export const styles: Style[] = [
     id: 'waves',
     name: { pt: 'Ondas', en: 'Waves' },
     hint: {
-      pt: 'Faixas onduladas da mesma largura atravessando a página, cada uma de uma cor.',
-      en: 'Wavy bands of the same width across the page, each one a different color.',
+      pt: 'Ondas grossas e chapadas empilhadas, cada uma com seu próprio balanço e de uma cor. Sem linhas.',
+      en: 'Thick, flat waves stacked up, each with its own swing and its own color. No lines.',
     },
   },
   {
@@ -151,24 +162,113 @@ export const styles: Style[] = [
     id: 'hatched',
     name: { pt: 'Retalhos hachurados', en: 'Hatched patchwork' },
     hint: {
-      pt: 'Uma grade de quadrados cortados em triângulos ou com um quarto de círculo num canto. Alterne peças pretas, hachuradas e de cor, girando as casas para formar cata-ventos ou ondas.',
-      en: 'A grid of squares cut into triangles or with a quarter circle in one corner. Alternate black, hatched and colored pieces, turning the tiles to make pinwheels or waves.',
+      pt: 'Uma grade de quadrados cortados em triângulos ou com um quarto de círculo num canto. Alterne peças escuras, hachuradas e de cor, girando as casas para formar cata-ventos ou ondas.',
+      en: 'A grid of squares cut into triangles or with a quarter circle in one corner. Alternate dark, hatched and colored pieces, turning the tiles to make pinwheels or waves.',
     },
   },
   {
     id: 'geometric',
     name: { pt: 'Padrão geométrico', en: 'Geometric pattern' },
     hint: {
-      pt: 'Formas geométricas repetidas pela página: casas com círculos, triângulos e cruzes, alvos, mosaico de triângulos, cubos, confete ou zigue-zague. Tudo chapado, alternando as cores.',
-      en: 'Geometric shapes repeated across the page: tiles with circles, triangles and crosses, targets, triangle mosaic, cubes, confetti or zigzags. All flat, alternating colors.',
+      pt: 'Formas geométricas repetidas como estampa de tapete antigo: losangos escalonados de kilim, estrelas de oito pontas, casas com círculos e triângulos, alvos, cubos ou zigue-zague. Tudo chapado, alternando as cores.',
+      en: 'Geometric shapes repeated like an old rug: stepped kilim diamonds, eight-point stars, tiles with circles and triangles, targets, cubes or zigzags. All flat, alternating colors.',
     },
   },
   {
     id: 'onion',
     name: { pt: 'Cebolas', en: 'Onions' },
     hint: {
-      pt: 'Gotas encaixadas em diagonal. Dentro de cada uma, linhas curvas saem da ponta de cima e se encontram na de baixo.',
-      en: 'Interlocking drops on a diagonal. Inside each, curved lines leave the top tip and meet at the bottom one.',
+      pt: 'Gotas encaixadas em diagonal. Dentro de cada uma, linhas curvas saem da ponta de cima e se encontram na de baixo. Pinte cada gomo de uma cor, na mesma ordem em todas, ou alterne só duas.',
+      en: 'Interlocking drops on a diagonal. Inside each, curved lines leave the top tip and meet at the bottom one. Color each slice differently, in the same order in all of them, or alternate just two.',
+    },
+  },
+  {
+    id: 'tarsila',
+    name: { pt: 'Paisagem Tarsila', en: 'Tarsila landscape' },
+    hint: {
+      pt: 'Inspirado em Tarsila do Amaral: morros redondos em camadas, um sol grande, árvores de copa redonda e um cacto gordinho na frente. Cores chapadas e curvas macias.',
+      en: 'Inspired by Tarsila do Amaral: layered round hills, a big sun, round-crowned trees and a chubby cactus in front. Flat colors and soft curves.',
+    },
+  },
+  {
+    id: 'volpi',
+    name: { pt: 'Bandeirinhas Volpi', en: 'Volpi flags' },
+    hint: {
+      pt: 'Inspirado em Alfredo Volpi: fileiras de bandeirinhas de festa junina penduradas em barbantes. Alterne duas a quatro cores num padrão fixo.',
+      en: 'Inspired by Alfredo Volpi: rows of little festival flags hanging on strings. Alternate two to four colors in a fixed pattern.',
+    },
+  },
+  {
+    id: 'britto',
+    name: { pt: 'Pop Romero Britto', en: 'Romero Britto pop' },
+    hint: {
+      pt: 'Inspirado em Romero Britto: um motivo grande e a página cortados por linhas retas. Cada pedaço ganha uma cor ou um padrão (bolinhas, listras, xadrez), com contorno grosso.',
+      en: 'Inspired by Romero Britto: a big motif and the page cut by straight lines. Each piece gets a color or a pattern (dots, stripes, checks), with a thick outline.',
+    },
+    motifs: ['heart', 'star', 'flower', 'sun', 'moon', 'lips', 'blob'],
+  },
+  {
+    id: 'athos',
+    name: { pt: 'Azulejos Athos Bulcão', en: 'Athos Bulcão tiles' },
+    hint: {
+      pt: 'Inspirado em Athos Bulcão: um único azulejo simples (arco, quarto de círculo, faixa) repetido e girado casa a casa. Duas ou três cores, tudo chapado.',
+      en: 'Inspired by Athos Bulcão: one simple tile (arch, quarter circle, band) repeated and turned tile by tile. Two or three colors, all flat.',
+    },
+  },
+  {
+    id: 'vangogh',
+    name: { pt: 'Céu Van Gogh', en: 'Van Gogh sky' },
+    hint: {
+      pt: 'Inspirado em Van Gogh: o céu todo feito de pinceladas curtas que giram em redemoinhos, estrelas com anéis de luz, morros embaixo e às vezes um cipreste. Use traços curtos lado a lado.',
+      en: 'Inspired by Van Gogh: a sky made of short strokes swirling around, stars with rings of light, hills below and sometimes a cypress. Use short strokes side by side.',
+    },
+  },
+  {
+    id: 'mondrian',
+    name: { pt: 'Grade Mondrian', en: 'Mondrian grid' },
+    hint: {
+      pt: 'Inspirado em Piet Mondrian: linhas retas e grossas dividindo a página em retângulos. Pinte só alguns com cores fortes e deixe o resto claro.',
+      en: 'Inspired by Piet Mondrian: thick straight lines splitting the page into rectangles. Color only a few in bold colors and leave the rest light.',
+    },
+  },
+  {
+    id: 'matisse',
+    name: { pt: 'Recortes Matisse', en: 'Matisse cut-outs' },
+    hint: {
+      pt: 'Inspirado nos recortes de Henri Matisse: painéis coloridos, cada um com uma alga ou estrela recortada de outra cor. Bordas meio tortas, como papel cortado à tesoura.',
+      en: "Inspired by Henri Matisse's cut-outs: colored panels, each with a seaweed or star cut from another color. Slightly uneven edges, like scissor-cut paper.",
+    },
+  },
+  {
+    id: 'kandinsky',
+    name: { pt: 'Círculos Kandinsky', en: 'Kandinsky circles' },
+    hint: {
+      pt: 'Inspirado em Kandinsky: uma grade de quadrados, cada um com círculos concêntricos de cores diferentes, um pouco fora do centro.',
+      en: 'Inspired by Kandinsky: a grid of squares, each with concentric circles in different colors, slightly off center.',
+    },
+  },
+  {
+    id: 'kusama',
+    name: { pt: 'Bolinhas Kusama', en: 'Kusama dots' },
+    hint: {
+      pt: 'Inspirado em Yayoi Kusama: uma abóbora de gomos redondos coberta de bolinhas escuras, que diminuem perto das bordas. Atrás, mais bolinhas em fileiras.',
+      en: 'Inspired by Yayoi Kusama: a pumpkin with round lobes covered in dark dots that shrink near the edges. More dots in rows behind.',
+    },
+  },
+  {
+    id: 'milhazes',
+    name: { pt: 'Mandalas Milhazes', en: 'Milhazes mandalas' },
+    hint: {
+      pt: 'Inspirado em Beatriz Milhazes: listras verticais de larguras diferentes e, por cima, alvos de círculos, rosáceas e anéis de pérolas se sobrepondo. Muita cor.',
+      en: 'Inspired by Beatriz Milhazes: vertical stripes of different widths with overlapping circle targets, rosettes and pearl rings on top. Lots of color.',
+    },
+  },
+  {
+    id: 'haring',
+    name: { pt: 'Dançarinos Haring', en: 'Haring dancers' },
+    hint: {
+      pt: 'Inspirado em Keith Haring: bonequinhos dançando feitos de traço grosso, com risquinhos de movimento em volta. Às vezes um coração grande no meio.',
+      en: 'Inspired by Keith Haring: little dancing figures made of thick strokes with motion dashes around them. Sometimes a big heart in the middle.',
     },
   },
 ]

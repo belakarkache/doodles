@@ -1,4 +1,4 @@
-import { add, fromAngle, poissonPoints, TAU, vec, type Vec } from '../../geometry'
+import { add, fromAngle, TAU, vec, type Vec } from '../../geometry'
 import { between, intBetween, pick, shuffle, type Rng } from '../../random'
 import { HEIGHT, WIDTH, type ArtContext, type Rhythm } from '../context'
 import { fill, ink, polyD, type Art } from '../draw'
@@ -78,20 +78,19 @@ function tilted(rng: Rng, body: (pad: number) => string): string {
 }
 
 function bauhaus(rng: Rng, painter: Painter, inks: string[], paper: string): string {
-  const pool = rng() < 0.5 ? names : shuffle(rng, names).slice(0, intBetween(rng, 2, 4))
+  const pool = shuffle(rng, names).slice(0, intBetween(rng, 1, 3))
   const size = between(rng, 52, 78)
-  const ground = rng() < 0.6
-  const turns = rng() < 0.5
+  const pinwheel = rng() < 0.5
   return tilted(rng, (pad) =>
     squareCells(rng, size, pad, false)
       .map(({ center, size, i, j }) => {
         const backs = [...inks, paper]
-        const back = ground ? backs[painter.rhythm(backs.length, i, j)] : paper
+        const back = backs[painter.rhythm(backs.length, i, j)]
         const fronts = inks.filter((c) => c !== back)
         const front = fronts[painter.rhythm(fronts.length, i, j)]
-        const turn = turns ? intBetween(rng, 0, 3) * QUARTER : ((i + j) % 4) * QUARTER
-        const tile = ground ? shape(painter, [box(size, size, center.x, center.y)], back) : ''
-        return tile + shape(painter, makers[pick(rng, pool)](center, size * 0.42, turn), front)
+        const turn = (pinwheel ? [0, 1, 3, 2][(i % 2) + 2 * (j % 2)] : (i + j) % 4) * QUARTER
+        const tile = shape(painter, [box(size, size, center.x, center.y)], back)
+        return tile + shape(painter, makers[pool[(i + j) % pool.length]](center, size * 0.42, turn), front)
       })
       .join(''),
   )
@@ -175,17 +174,62 @@ function cubes(rng: Rng, painter: Painter, inks: string[]): string {
   return parts.join('')
 }
 
-function confetti(rng: Rng, painter: Painter, inks: string[]): string {
-  const pool = rng() < 0.4 ? shuffle(rng, names).slice(0, intBetween(rng, 3, 5)) : names
-  const gap = between(rng, 40, 56)
-  const points = poissonPoints(rng, WIDTH + 40, HEIGHT + 40, gap, 0, 120)
-  return points
-    .map((p) => {
-      const center = vec(p.x - 20, p.y - 20)
-      const color = inks[painter.rhythm(inks.length, Math.floor(p.x / gap), Math.floor(p.y / gap))]
-      return shape(painter, makers[pick(rng, pool)](center, gap * between(rng, 0.3, 0.45), between(rng, 0, TAU)), color)
-    })
-    .join('')
+function stepped(center: Vec, a: number, b: number, steps: number): Vec[] {
+  const quarter: Vec[] = []
+  for (let k = 0; k < steps; k++) {
+    const y = -b + (k / steps) * b
+    quarter.push(vec((k / steps) * a, y), vec(((k + 1) / steps) * a, y))
+  }
+  const flip = (sx: number, sy: number, points: Vec[]) => points.map((p) => vec(p.x * sx, p.y * sy))
+  const right = [...quarter, vec(a, 0)]
+  const loop = [...right, ...flip(1, -1, right).reverse(), ...flip(-1, -1, right), ...flip(-1, 1, right).reverse()]
+  return loop.map((p) => add(center, p))
+}
+
+function kilim(rng: Rng, painter: Painter, inks: string[], paper: string): string {
+  const a = between(rng, 34, 46)
+  const b = a * between(rng, 1.2, 1.45)
+  const layers = intBetween(rng, 3, 4)
+  const steps = intBetween(rng, 4, 6)
+  const colors = shuffle(rng, inks).slice(0, Math.min(inks.length, layers + 1))
+  const ground = colors[colors.length - 1]
+  const parts = [shape(painter, [box(WIDTH + 600, HEIGHT + 600, WIDTH / 2, HEIGHT / 2)], ground)]
+  for (let j = -1; (j - 1) * b < HEIGHT; j++) {
+    for (let i = -1; (i - 1) * a * 2 < WIDTH; i++) {
+      const center = vec(i * a * 2 + (j % 2 ? a : 0), j * b)
+      const shift = j % 2 ? 1 : 0
+      for (let k = 0; k < layers; k++) {
+        const t = 1 - k / layers
+        const fillColor = k % 2 === 0 ? colors[(k / 2 + shift) % (colors.length - 1)] : paper
+        parts.push(shape(painter, [stepped(center, a * t * 0.96, b * t * 0.96, Math.max(1, Math.round(steps * t)))], fillColor))
+      }
+    }
+  }
+  return parts.join('')
+}
+
+function octagram(center: Vec, r: number, turn = 0): Vec[] {
+  const inner = r * (Math.cos(Math.PI / 4) / Math.cos(Math.PI / 8))
+  return Array.from({ length: 16 }, (_, k) => add(center, fromAngle(turn + (k / 16) * TAU, k % 2 ? inner : r)))
+}
+
+function zellige(rng: Rng, painter: Painter, inks: string[], paper: string): string {
+  const size = between(rng, 50, 70)
+  const [first, second, third, fourth] = shuffle(rng, inks)
+  const ground = rng() < 0.5 ? paper : fourth ?? paper
+  const parts = [shape(painter, [box(WIDTH + 600, HEIGHT + 600, WIDTH / 2, HEIGHT / 2)], ground)]
+  return tilted(rng, (pad) => {
+    for (let j = -1; (j - 1) * size < HEIGHT + pad * 2; j++) {
+      for (let i = -1; (i - 1) * size < WIDTH + pad * 2; i++) {
+        const center = vec(i * size - pad, j * size - pad)
+        const even = (i + j) % 2 === 0
+        parts.push(shape(painter, [octagram(center, size * 0.5)], even ? first : second))
+        parts.push(shape(painter, [regular(center, size * 0.2, 8, Math.PI / 8)], even ? second : third ?? paper))
+        parts.push(shape(painter, [regular(add(center, vec(size / 2, size / 2)), size * 0.13, 4)], third ?? first))
+      }
+    }
+    return parts.join('')
+  })
 }
 
 function chevrons(rng: Rng, painter: Painter, inks: string[], paper: string): string {
@@ -211,16 +255,17 @@ function chevrons(rng: Rng, painter: Painter, inks: string[], paper: string): st
 
 export function geometric(ctx: ArtContext): Art {
   const { rng, pens } = ctx
-  const painter: Painter = { hand: ctx.hand.softer(0.3), line: pens.line, outlined: ctx.outlines !== 'none', rhythm: ctx.rhythm }
+  const painter: Painter = { hand: ctx.hand.softer(0.3), line: pens.line, outlined: ctx.outlined, rhythm: ctx.rhythm }
   const paper = pens.background
   const inks = pens.colors.filter((c) => c !== paper)
-  const variant = pick(rng, ['bauhaus', 'targets', 'triangles', 'cubes', 'confetti', 'chevrons'] as const)
+  const variant = pick(rng, ['bauhaus', 'targets', 'triangles', 'cubes', 'chevrons', 'kilim', 'zellige'] as const)
   const body = {
     bauhaus: () => bauhaus(rng, painter, inks, paper),
     targets: () => targets(rng, painter, inks, paper),
     triangles: () => triangles(rng, painter, inks, paper),
     cubes: () => cubes(rng, painter, inks),
-    confetti: () => confetti(rng, painter, inks),
+    kilim: () => kilim(rng, painter, inks, paper),
+    zellige: () => zellige(rng, painter, inks, paper),
     chevrons: () => chevrons(rng, painter, inks, paper),
   }[variant]()
   return { background: paper, body }

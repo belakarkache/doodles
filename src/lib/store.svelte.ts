@@ -1,16 +1,13 @@
-import type { OutlineMode } from './art'
 import type { StyleId } from './data/catalog'
 import { randomSeed, randomSeeds, reroll, type Category } from './generator'
 
-const OUTLINES_KEY = 'doodles:outlines'
-const OUTLINE_MODES: OutlineMode[] = ['ink', 'color', 'none']
+const OUTLINES_KEY = 'doodles:outlined'
 
-function initialOutlines(): OutlineMode {
+function initialOutlined(): boolean {
   try {
-    const saved = localStorage.getItem(OUTLINES_KEY)
-    return OUTLINE_MODES.find((mode) => mode === saved) ?? 'ink'
+    return localStorage.getItem(OUTLINES_KEY) !== 'off'
   } catch {
-    return 'ink'
+    return true
   }
 }
 
@@ -19,13 +16,13 @@ export const app = $state({
   locked: new Set<Category>(),
   style: null as StyleId | null,
   palette: null as string | null,
-  outlines: initialOutlines(),
+  outlined: initialOutlined(),
 })
 
-export function setOutlines(outlines: OutlineMode) {
-  app.outlines = outlines
+export function setOutlined(outlined: boolean) {
+  app.outlined = outlined
   try {
-    localStorage.setItem(OUTLINES_KEY, outlines)
+    localStorage.setItem(OUTLINES_KEY, outlined ? 'on' : 'off')
   } catch {}
 }
 

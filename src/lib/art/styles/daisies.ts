@@ -98,7 +98,7 @@ export function daisies(ctx: ArtContext): Art {
   const hand = ctx.hand.softer(0.45)
   const gap = between(rng, 7, 9)
   const { blooms, roundness } = pick(rng, ['grid', 'packed']) === 'grid' ? gridBlooms(rng, gap) : packedBlooms(rng, gap)
-  const cream = ctx.outlines !== 'none' && rng() < 0.5
+  const cream = ctx.outlined && rng() < 0.5
   const petalColors = pens.colors.filter((c) => c !== pens.line)
   const row = (bloom: Bloom) => Math.floor(bloom.center.y / ROW)
   const ordered = [...blooms].sort((a, b) => row(a) - row(b) || a.center.x - b.center.x)
@@ -109,5 +109,5 @@ export function daisies(ctx: ArtContext): Art {
     const coreColor = cream ? tint(f) : tint(f, 2)
     return fill(petals.join(' '), petalColor) + fill(polyD(hand.points(circle(bloom.center, bloom.core))), coreColor)
   })
-  return { background: ctx.outlines === 'none' ? pens.background : pens.line, body: body.join('') }
+  return { background: ctx.outlined ? pens.line : pens.background, body: body.join('') }
 }

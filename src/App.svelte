@@ -15,7 +15,7 @@
   import { paletteFrom } from './lib/palette'
   import { rngFor } from './lib/random'
   import { locale, setLang, tr } from './lib/i18n.svelte'
-  import { app, choosePalette, chooseStyle, roll, setOutlines, toggleLock } from './lib/store.svelte'
+  import { app, choosePalette, chooseStyle, roll, setOutlined, toggleLock } from './lib/store.svelte'
   import { MediaQuery } from 'svelte/reactivity'
   import { resolveColor, themeFor } from './lib/theme'
   import { categoryLabels, ui } from './lib/ui'
@@ -23,22 +23,20 @@
   setLang(locale.lang)
 
   const combo = $derived(combine(app.seeds, app.style, app.palette))
-  const pens = $derived(pensFor(combo, app.outlines))
+  const pens = $derived(pensFor(combo))
   const outlineModes = [
-    { mode: 'ink', label: ui.outlineInk },
-    { mode: 'color', label: ui.outlineColor },
-    { mode: 'none', label: ui.outlineNone },
+    { outlined: true, label: ui.outlineOn },
+    { outlined: false, label: ui.outlineOff },
   ] as const
-  const outlineIndex = $derived(outlineModes.findIndex((option) => option.mode === app.outlines))
+  const outlineIndex = $derived(app.outlined ? 0 : 1)
   const styleNames = $derived(styles.map((style) => tr(style.name)))
   const paletteNames = $derived(paletteThemes.map((theme) => tr(theme.name)))
   const theme = $derived(themeFor(pens.colors))
 
-  const art = $derived(renderArt(combo, app.outlines))
-  const separateLine = $derived(!pens.blackPen && !pens.colors.includes(pens.line))
+  const art = $derived(renderArt(combo, app.outlined))
+  const separateLine = $derived(!pens.colors.includes(pens.line))
   const inked = $derived(inkedIn(art))
   const markers = $derived((separateLine ? [pens.line, ...pens.colors, pens.background] : [...pens.colors, pens.background]).filter(inked))
-  const blackPen = $derived(pens.blackPen && inked(pens.line))
   const artLabel = $derived(combo.motif ? `${tr(combo.style.name)}, ${tr(combo.motif.name)}` : tr(combo.style.name))
 
   $effect(() => {
@@ -53,14 +51,14 @@
   let previewsKey = ''
 
   function preview(style: StyleId): string {
-    const key = `${combo.palette.theme.id}|${combo.seeds.colors}|${app.outlines}`
+    const key = `${combo.palette.theme.id}|${combo.seeds.colors}|${app.outlined}`
     if (key !== previewsKey) {
       previews = new Map()
       previewsKey = key
     }
     const cached = previews.get(style)
     if (cached) return cached
-    const svg = renderArt(combine({ ...combo.seeds, layout: 424242, motif: 7 }, style, combo.palette.theme.id), app.outlines)
+    const svg = renderArt(combine({ ...combo.seeds, layout: 424242, motif: 7 }, style, combo.palette.theme.id), app.outlined)
     previews.set(style, svg)
     return svg
   }
@@ -212,8 +210,8 @@
               <span class="outline-label" id="outline-label">{tr(ui.outlines)}</span>
               <div class="toggle" role="group" aria-labelledby="outline-label" style:--choice={outlineIndex}>
                 <span class="toggle-thumb" aria-hidden="true"></span>
-                {#each outlineModes as option (option.mode)}
-                  <button type="button" aria-pressed={app.outlines === option.mode} onclick={() => setOutlines(option.mode)}>{tr(option.label)}</button>
+                {#each outlineModes as option (option.outlined)}
+                  <button type="button" aria-pressed={app.outlined === option.outlined} onclick={() => setOutlined(option.outlined)}>{tr(option.label)}</button>
                 {/each}
               </div>
             </div>
@@ -232,7 +230,7 @@
       </section>
 
       <div class="pens">
-        <Markers colors={markers} {blackPen} />
+        <Markers colors={markers} />
       </div>
     </div>
 
@@ -418,7 +416,7 @@
   .toggle {
     position: relative;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     padding: 4px;
     border-radius: 999px;
     background: var(--tint);
@@ -429,7 +427,7 @@
     top: 4px;
     bottom: 4px;
     left: 4px;
-    width: calc((100% - 8px) / 3);
+    width: calc((100% - 8px) / 2);
     border-radius: 999px;
     background: var(--paper);
     box-shadow: 0 2px 0 var(--line-edge);

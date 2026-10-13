@@ -188,7 +188,7 @@ function circles(painter: Painter, cells: Cell[], light: string, colors: string[
 
 export function tiles(ctx: ArtContext): Art {
   const { rng, pens } = ctx
-  const painter: Painter = { hand: ctx.hand.softer(0.3), line: pens.line, outlined: ctx.outlines !== 'none', rhythm: ctx.rhythm }
+  const painter: Painter = { hand: ctx.hand.softer(0.3), line: pens.line, outlined: ctx.outlined, rhythm: ctx.rhythm }
   const light = pens.background
   const contrast = (c: string) => Math.abs(luminance(c) - luminance(light))
   const ranked = pens.colors.filter((c) => c !== pens.line && c !== light).sort((a, b) => contrast(b) - contrast(a))

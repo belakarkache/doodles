@@ -1,11 +1,11 @@
-import { fmt, pt, TAU, vec, type Vec } from '../../geometry'
+import { catmullRom, ellipse, fmt, pt, TAU, vec, type Vec } from '../../geometry'
 import { between, intBetween, pick, shuffle } from '../../random'
 import { color, HEIGHT, spectrum, tone, WIDTH, type ArtContext } from '../context'
 import { bulge, circleD, clipPath, clipped, fill, ink, loopsD, paint, polyD, range, rect, regions, sunburst, type Art } from '../draw'
-import { eye as eyeShape, lips as lipsShape, motifShapes, mushroom } from '../shapes'
+import { eye as eyeShape, lips as lipsShape, motifShapes } from '../shapes'
 
 function sparkleAt(ctx: ArtContext, x: number, y: number, r: number, fillColor: string): string {
-  return ink(polyD(motifShapes.sparkle(ctx.rng, x, y, r)), ctx.pens.line, 3.4, fillColor)
+  return ink(polyD(motifShapes.sparkle(ctx.rng, x, y, r)), ctx.pens.line, 3, fillColor)
 }
 
 function backdrop(ctx: ArtContext, focusY: number): string {
@@ -25,76 +25,141 @@ function backdrop(ctx: ArtContext, focusY: number): string {
   return paint(regions(field), ({ x, y }) => tone(ctx, colors, Math.floor(band(x, y) / 2)))
 }
 
-function capPattern(ctx: ArtContext, cx: number, cy: number, r: number, base: string, accent: string): string {
+function capPattern(ctx: ArtContext, cx: number, top: number, brim: number, w: number, base: string, accent: string): string {
   const { rng, hand } = ctx
   const kind = pick(rng, ['dots', 'dots', 'stripes', 'checker'])
+  const h = brim - top
   if (kind === 'dots') {
     const centers: Vec[] = []
-    for (let attempt = 0; attempt < 200 && centers.length < 7; attempt++) {
-      const p = vec(cx + between(rng, -0.8, 0.8) * r, cy - between(rng, 0.15, 0.85) * r)
-      if (centers.every((q) => Math.hypot(p.x - q.x, p.y - q.y) > r * 0.36)) centers.push(p)
+    const gap = w * between(rng, 0.34, 0.42)
+    for (let attempt = 0; attempt < 300 && centers.length < 9; attempt++) {
+      const p = vec(cx + between(rng, -1.05, 1.05) * w, top + between(rng, 0.05, 0.95) * h)
+      if (centers.every((q) => Math.hypot(p.x - q.x, p.y - q.y) > gap)) centers.push(p)
     }
-    const dots = centers.map((p) => circleD(p.x, p.y, r * between(rng, 0.09, 0.14)))
-    return rect(base) + ink(dots.join(' '), ctx.pens.line, 3.2, accent)
+    const dots = centers.map((p) => polyD(hand.points(ellipse(p, w * between(rng, 0.09, 0.15), undefined, 24))))
+    return rect(base) + ink(dots.join(' '), ctx.pens.line, 3, accent)
   }
-  const size = r * between(rng, 0.22, 0.3)
-  const warp = bulge(cx, cy - r * 0.4, r * 0.8, 0.45)
+  const size = w * between(rng, 0.2, 0.26)
+  const warp = bulge(cx, top + h * 0.55, w * 0.9, 0.4)
   const field = hand.field((x, y) => {
     const [u, v] = warp(x, y)
-    return kind === 'stripes' ? Math.sin(((u - cx) / size) * Math.PI) : Math.sin(((u - cx) / size) * Math.PI) * Math.sin(((v - cy) / size) * Math.PI)
+    const across = Math.sin(((u - cx) / size) * Math.PI)
+    return kind === 'stripes' ? across : across * Math.sin(((v - brim) / size) * Math.PI)
   })
   return rect(base) + fill(loopsD(regions(field)), accent)
 }
 
+type Mushroom = { cap: Vec[]; stem: Vec[]; top: number; brim: number; w: number; skirt: string }
+
+function mushroomAt(ctx: ArtContext, cx: number, foot: number, r: number): Mushroom {
+  const { rng } = ctx
+  const hand = ctx.hand.softer(0.45)
+  const w = r * between(rng, 0.92, 1.04)
+  const height = r * between(rng, 0.78, 0.96)
+  const lean = r * between(rng, -0.06, 0.06)
+  const stemHeight = r * between(rng, 0.85, 1.05)
+  const brim = foot - stemHeight
+  const top = brim - height
+  const under = r * between(rng, 0.1, 0.16)
+  const cap = catmullRom(
+    [
+      vec(cx - w, brim),
+      vec(cx - w * 0.94 + lean * 0.3, brim - height * 0.42),
+      vec(cx - w * 0.64 + lean * 0.7, brim - height * 0.86),
+      vec(cx + lean, top),
+      vec(cx + w * 0.64 + lean * 0.7, brim - height * 0.86),
+      vec(cx + w * 0.94 + lean * 0.3, brim - height * 0.42),
+      vec(cx + w, brim),
+      vec(cx + w * 0.62, brim + under * 0.8),
+      vec(cx, brim + under),
+      vec(cx - w * 0.62, brim + under * 0.8),
+    ],
+    10,
+    true,
+  )
+  const neck = r * between(rng, 0.24, 0.32)
+  const belly = neck * between(rng, 1.06, 1.18)
+  const base = neck * between(rng, 1.12, 1.3)
+  const stem = catmullRom(
+    [
+      vec(cx - neck, brim),
+      vec(cx + neck, brim),
+      vec(cx + belly, brim + stemHeight * 0.5),
+      vec(cx + base, foot - 4),
+      vec(cx + base * 0.6, foot + 2),
+      vec(cx - base * 0.6, foot + 2),
+      vec(cx - base, foot - 4),
+      vec(cx - belly, brim + stemHeight * 0.5),
+    ],
+    8,
+    true,
+  )
+  const ringY = brim + under + stemHeight * between(rng, 0.12, 0.2)
+  const skirt = rng() < 0.5 ? `M${pt(vec(cx - belly * 1.2, ringY))} Q${pt(vec(cx, ringY + r * 0.12))} ${pt(vec(cx + belly * 1.2, ringY))}` : ''
+  return { cap: hand.points(cap), stem: hand.points(stem), top, brim: brim + under, w, skirt }
+}
+
+function shine(ctx: ArtContext, m: Mushroom, cx: number): string {
+  const h = m.brim - m.top
+  const from = vec(cx - m.w * 0.62, m.top + h * 0.5)
+  const bend = vec(cx - m.w * 0.5, m.top + h * 0.12)
+  const to = vec(cx - m.w * 0.18, m.top + h * 0.02)
+  return `<path class="ink" pathLength="1" d="M${pt(from)} Q${pt(bend)} ${pt(to)}" fill="none" stroke="#ffffff" stroke-opacity="0.7" stroke-width="${fmt(Math.max(4, m.w * 0.07))}"/>`
+}
+
 export function mushrooms(ctx: ArtContext): Art {
   const { rng, pens, uid } = ctx
-  const ground = HEIGHT - 46
+  const groundY = HEIGHT - 58
+  const roll = between(rng, 0, TAU)
+  const ground = (x: number) => groundY + 7 * Math.sin(x * 0.018 + roll)
   const count = pick(rng, [1, 2, 2, 3])
   const layout =
     count === 1
-      ? [{ x: WIDTH / 2, r: between(rng, 110, 125) }]
+      ? [{ x: WIDTH / 2, r: between(rng, 112, 122) }]
       : count === 2
         ? [
-            { x: WIDTH * 0.42, r: between(rng, 95, 108) },
-            { x: WIDTH * 0.8, r: between(rng, 52, 62) },
+            { x: WIDTH * 0.42, r: between(rng, 96, 106) },
+            { x: WIDTH * 0.79, r: between(rng, 54, 62) },
           ]
         : [
-            { x: WIDTH * 0.5, r: between(rng, 90, 100) },
-            { x: WIDTH * 0.16, r: between(rng, 46, 54) },
-            { x: WIDTH * 0.84, r: between(rng, 56, 66) },
+            { x: WIDTH * 0.52, r: between(rng, 88, 96) },
+            { x: WIDTH * 0.18, r: between(rng, 46, 52) },
+            { x: WIDTH * 0.82, r: between(rng, 56, 64) },
           ]
-  const hand = ctx.hand.softer(0.6)
   const defs: string[] = []
   const bodies = layout
     .slice()
     .sort((a, b) => a.r - b.r)
     .map(({ x, r }, i) => {
-      const cy = ground - r * 0.85
-      const outline = polyD(hand.points(mushroom(rng, x, cy, r)))
-      const shapeId = `${uid}-m${i}`
+      const m = mushroomAt(ctx, x, ground(x) + r * 0.04, r)
+      const stemId = `${uid}-s${i}`
       const capId = `${uid}-c${i}`
-      defs.push(clipPath(shapeId, outline), `<clipPath id="${capId}"><rect x="-20" y="-20" width="${WIDTH + 40}" height="${fmt(cy + r * 0.1 + 20)}"/></clipPath>`)
-      const stem = rect(pens.background)
-      const cap = clipped(capId, capPattern(ctx, x, cy, r, color(ctx, i * 2), color(ctx, i * 2 + 1)))
-      const gills = ink(`M${pt(vec(x - r * 0.55, cy + r * 0.1))} Q${pt(vec(x, cy + r * 0.24))} ${pt(vec(x + r * 0.55, cy + r * 0.1))}`, pens.line, 3.6)
-      return clipped(shapeId, stem + cap) + gills + ink(outline, pens.line, 4.8)
+      const stemD = polyD(m.stem)
+      const capD = polyD(m.cap)
+      defs.push(clipPath(stemId, stemD), clipPath(capId, capD))
+      const stemColor = color(ctx, i * 3 + 2)
+      const stem = ink(stemD, pens.line, 4.2, stemColor) + (m.skirt ? clipped(stemId, ink(m.skirt, pens.line, 3.4)) : '')
+      const cap = clipped(capId, capPattern(ctx, x, m.top, m.brim, m.w, color(ctx, i * 3), color(ctx, i * 3 + 1)) + shine(ctx, m, x))
+      return stem + cap + ink(capD, pens.line, 4.6)
     })
-  const tufts = range(18, WIDTH - 10, between(rng, 34, 48)).map((x) => {
-    const h = between(rng, 10, 18)
-    return ink(`M${fmt(x - 6)} ${ground} q2 ${fmt(-h)} 4 ${fmt(-h)} M${fmt(x)} ${ground} q0 ${fmt(-h * 1.3)} 1 ${fmt(-h * 1.3)} M${fmt(x + 6)} ${ground} q-2 ${fmt(-h)} -4 ${fmt(-h)}`, pens.line, 3.4)
+  const hill = polyD([...range(-20, WIDTH + 30, 10).map((x) => vec(x, ground(x))), vec(WIDTH + 20, HEIGHT + 20), vec(-20, HEIGHT + 20)])
+  const tufts = range(14, WIDTH - 8, between(rng, 30, 42)).map((x) => {
+    const y = ground(x) + 2
+    const h = between(rng, 9, 15)
+    return ink(`M${fmt(x - 6)} ${fmt(y)} q1 ${fmt(-h * 0.7)} -2 ${fmt(-h)} M${fmt(x)} ${fmt(y)} q1 ${fmt(-h)} 0 ${fmt(-h * 1.35)} M${fmt(x + 6)} ${fmt(y)} q-1 ${fmt(-h * 0.7)} 2 ${fmt(-h)}`, pens.line, 3)
   })
   const sparkles = shuffle(rng, [
     [40, 50],
     [250, 60],
     [150, 34],
-    [30, 170],
-    [270, 190],
+    [34, 150],
+    [266, 160],
   ])
     .slice(0, intBetween(rng, 2, 4))
-    .map(([x, y], i) => sparkleAt(ctx, x, y, between(rng, 12, 18), color(ctx, i + 2)))
+    .map(([x, y], i) => sparkleAt(ctx, x, y, between(rng, 15, 22), color(ctx, i + 2)))
   return {
     background: pens.background,
-    body: backdrop(ctx, ground - 120) + fill(`M-20 ${ground} H${WIDTH + 20} V${HEIGHT + 20} H-20 Z`, color(ctx, 1)) + ink(`M-20 ${ground} H${WIDTH + 20}`, pens.line, 4.4) + tufts.join('') + bodies.join('') + sparkles.join(''),
+    body: backdrop(ctx, groundY - 120) + ink(hill, pens.line, 4.4, color(ctx, 1)) + tufts.join('') + bodies.join('') + sparkles.join(''),
     defs: defs.join(''),
   }
 }

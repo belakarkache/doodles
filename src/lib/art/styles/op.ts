@@ -1,7 +1,8 @@
-import { bulge, circleD, clipPath, clipped, fill, ink, levelLines, loopsD, onCell, paint, polyD, range, rect, regions, type Art } from '../draw'
+import { bulge, circleD, clipPath, clipped, fill, ink, loopsD, onCell, paint, polyD, range, rect, regions, type Art } from '../draw'
 import { color, except, HEIGHT, tone, WIDTH, type ArtContext } from '../context'
 import { flower, motifShapes } from '../shapes'
 import { vec } from '../../geometry'
+import { distance } from '../../theme'
 import { between, intBetween, pick, shuffle } from '../../random'
 
 const checker = (u: number, v: number, size: number) => Math.sin((u / size) * Math.PI) * Math.sin((v / size) * Math.PI)
@@ -53,16 +54,17 @@ export function stripeInversion(ctx: ArtContext): Art {
 }
 
 export function interference(ctx: ArtContext): Art {
-  const { rng, pens, hand } = ctx
+  const { rng, hand, pens } = ctx
   const a = vec(between(rng, 80, 130), between(rng, 110, 170))
   const b = vec(between(rng, 170, 220), between(rng, 230, 300))
   const period = between(rng, 42, 52)
-  const rings = (x: number, y: number): [number, number] => [Math.hypot(x - a.x, y - a.y) / period, Math.hypot(x - b.x, y - b.y) / period]
-  const field = hand.field((x, y) => checker(...rings(x, y), 1))
+  const field = hand.field((x, y) => checker(Math.hypot(x - a.x, y - a.y) / period, Math.hypot(x - b.x, y - b.y) / period, 1))
   const loops = regions(field)
-  const others = except(ctx, 1)
-  const body = paint(loops, ({ x, y }) => tone(ctx, others, ...onCell(...rings(x, y))))
-  return { background: color(ctx, 1), body: body + ink(loopsD(loops), pens.line, 3.4) }
+  const sameLine = rng() < 0.5
+  const y = color(ctx, 1)
+  const x = pens.colors.reduce((a, b) => (distance(b, y) > distance(a, y) ? b : a))
+  const lines = ctx.outlined ? ink(loopsD(loops), sameLine ? x : pens.line, 3.4) : ''
+  return { background: y, body: fill(loopsD(loops), x) + lines }
 }
 
 export function twist(ctx: ArtContext): Art {
@@ -101,25 +103,38 @@ export function groovy(ctx: ArtContext): Art {
     const r = between(rng, 48, 66)
     return fill(polyD(hand.points(flower(rng, x, y, r))), color(ctx, petals[i])) + fill(circleD(x, y, r * 0.3), color(ctx, petals[i] + 1))
   })
-  const others = except(ctx, 1, ...petals)
-  const body = paint(regions(field), ({ x, y }) => tone(ctx, others, ...onCell(...swirl(x, y))))
-  return { background: color(ctx, 1), body: body + flowers.join('') }
+  return { background: color(ctx, 1), body: fill(loopsD(regions(field)), color(ctx, 0)) + flowers.join('') }
+}
+
+type Swell = { amp: number; freq: number; phase: number; sharp: number }
+
+function swellAt(swells: Swell[], x: number): number {
+  return swells.reduce((y, { amp, freq, phase, sharp }) => {
+    const t = x * freq + phase
+    return y - amp * (Math.sin(t) + sharp * Math.sin(2 * t - Math.PI / 2))
+  }, 0)
 }
 
 export function waves(ctx: ArtContext): Art {
   const { rng, pens } = ctx
-  const hand = ctx.hand.softer(0.6)
-  const angle = (pick(rng, [0, -14, 14, -24, 24]) * Math.PI) / 180
-  const gap = between(rng, 18, 24)
-  const freq = between(rng, 0.018, 0.026)
-  const amp = between(rng, 0.3, 0.38) / freq
-  const field = hand.field((x, y) => {
-    const u = x * Math.cos(angle) + y * Math.sin(angle)
-    const v = -x * Math.sin(angle) + y * Math.cos(angle)
-    return (v + amp * Math.sin(u * freq)) / Math.sqrt(1 + 0.5 * (amp * freq * Math.cos(u * freq)) ** 2)
-  })
-  const levels = range(-300, 600, gap)
-  const lines = levelLines(field, levels)
-  const bands = levels.map((_, k) => fill(loopsD(lines[levels.length - 1 - k]), tone(ctx, pens.colors, levels.length - 1 - k))).join('')
-  return { background: pens.background, body: bands + ink(lines.flat().map(polyD).join(' '), pens.line) }
+  const angle = pick(rng, [0, 0, -10, 10, -18, 18])
+  const lean = between(rng, -0.6, 0.6)
+  const inks = pens.colors.slice(0, intBetween(rng, 3, pens.colors.length))
+  const bands: string[] = []
+  let k = 0
+  for (let base = HEIGHT + 200; base > -200; k++) {
+    const thickness = between(rng, 44, 78)
+    const swells: Swell[] = [
+      { amp: between(rng, 12, 24), freq: between(rng, 0.014, 0.024), phase: between(rng, 0, 7) + k * lean, sharp: between(rng, 0.15, 0.35) },
+      { amp: between(rng, 3, 9), freq: between(rng, 0.04, 0.07), phase: between(rng, 0, 7), sharp: 0 },
+    ]
+    const top = range(-140, WIDTH + 150, 6).map((x) => vec(x, base + swellAt(swells, x)))
+    const d = polyD([...ctx.hand.softer(0.5).points(top), vec(WIDTH + 150, HEIGHT + 260), vec(-140, HEIGHT + 260)])
+    bands.push(fill(d, inks[k % inks.length]))
+    base -= thickness
+  }
+  return {
+    background: pens.background,
+    body: `<g transform="rotate(${angle} ${WIDTH / 2} ${HEIGHT / 2})">${bands.reverse().join('')}</g>`,
+  }
 }

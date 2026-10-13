@@ -1,13 +1,11 @@
 <script lang="ts">
-  import Fineliner from './Fineliner.svelte'
-
-  let { colors, blackPen }: { colors: string[]; blackPen: boolean } = $props()
+  let { colors }: { colors: string[] } = $props()
 
   const nudge = (i: number) => [6, 0, 10, 2, 12, 1, 8][i % 7]
   const tilt = (i: number) => [-2.5, 1.5, -1, 3, -2, 1, -3][i % 7]
 </script>
 
-{#key `${colors.join()}|${blackPen}`}
+{#key colors.join()}
   <ul class="tray" aria-hidden="true">
     {#each colors as color, i (i)}
       <li style:--nudge={`${nudge(i)}px`} style:--tilt={`${tilt(i)}deg`} style:--delay={`${i * 45}ms`}>
@@ -24,11 +22,6 @@
         </svg>
       </li>
     {/each}
-    {#if blackPen}
-      <li class="fineliner" style:--nudge="4px" style:--tilt="2deg" style:--delay={`${colors.length * 45}ms`}>
-        <Fineliner />
-      </li>
-    {/if}
   </ul>
 {/key}
 
@@ -56,10 +49,6 @@
 
   li:hover {
     transform: translateY(calc(var(--nudge) - 12px)) rotate(calc(var(--tilt) * -1.5));
-  }
-
-  .fineliner {
-    flex-basis: calc(var(--marker-w, clamp(24px, 2.7vw, 36px)) * 0.5);
   }
 
   svg {
