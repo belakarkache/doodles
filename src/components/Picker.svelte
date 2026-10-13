@@ -2,6 +2,7 @@
   import type { Snippet } from 'svelte'
   import { scale } from 'svelte/transition'
   import { backOut } from 'svelte/easing'
+  import { MediaQuery, SvelteSet } from 'svelte/reactivity'
   import Icon from './Icon.svelte'
 
   let {
@@ -10,6 +11,8 @@
     selected,
     randomLabel,
     columns = 1,
+    active = true,
+    railCount = columns + 0.5,
     current,
     option,
     onPick,
@@ -19,14 +22,52 @@
     selected: string | null
     randomLabel: string
     columns?: number
+    active?: boolean
+    railCount?: number
     current: Snippet
-    option: Snippet<[T]>
+    option: Snippet<[T, boolean]>
     onPick: (id: string | null) => void
   } = $props()
 
   let open = $state(false)
   let root: HTMLDivElement | undefined = $state()
   let list: HTMLDivElement | undefined = $state()
+
+  const compact = new MediaQuery('max-width: 899px')
+  const reducedMotion = new MediaQuery('prefers-reduced-motion: reduce')
+  const inView = new SvelteSet<string>()
+
+  $effect(() => {
+    if (!list || !compact.current) return
+    const rail = list
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const id = (entry.target as HTMLElement).dataset.id
+          if (!id) continue
+          if (entry.isIntersecting) inView.add(id)
+          else inView.delete(id)
+        }
+      },
+      { root: rail, rootMargin: '0px 50%' },
+    )
+    for (const element of rail.querySelectorAll('[data-id]')) observer.observe(element)
+    return () => {
+      observer.disconnect()
+      inView.clear()
+    }
+  })
+
+  $effect(() => {
+    if (!list || !compact.current || !active) return
+    selected
+    const target = list.querySelector<HTMLElement>('[aria-selected="true"]')
+    if (!target) return
+    const start = target.offsetLeft
+    const end = start + target.offsetWidth
+    const visible = start >= list.scrollLeft && end <= list.scrollLeft + list.clientWidth
+    if (!visible) list.scrollTo({ left: start - (list.clientWidth - target.offsetWidth) / 2, behavior: reducedMotion.current ? 'instant' : 'smooth' })
+  })
 
   function toggle() {
     open = !open
@@ -49,7 +90,7 @@
   }
 
   function onKeydown(event: KeyboardEvent) {
-    if (!open) return
+    if (!open && !compact.current) return
     if (event.key === 'Escape') {
       event.preventDefault()
       open = false
@@ -58,7 +99,8 @@
     }
     const options = [...(list?.querySelectorAll<HTMLButtonElement>('button') ?? [])]
     const index = options.indexOf(document.activeElement as HTMLButtonElement)
-    const steps: Record<string, number> = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: columns, ArrowUp: -columns }
+    const row = compact.current ? 1 : columns
+    const steps: Record<string, number> = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: row, ArrowUp: -row }
     const step = steps[event.key]
     if (step === undefined || index < 0) return
     event.preventDefault()
@@ -70,26 +112,43 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="picker" bind:this={root} onkeydown={onKeydown}>
-  <button class="trigger slot" type="button" aria-haspopup="listbox" aria-expanded={open} aria-label={label} onclick={toggle}>
-    <span class="current">{@render current()}</span>
-    <span class="chevron" class:flipped={open}><Icon name="chevron" /></span>
-  </button>
-
-  {#if open}
-    <div class="panel" role="listbox" aria-label={label} bind:this={list} style:--columns={columns} transition:scale={{ start: 0.9, duration: 220, easing: backOut }}>
-      <button class="option random" type="button" role="option" aria-selected={selected === null} style:--i={0} onclick={() => pick(null)}>
+  {#if compact.current}
+    <div class="rail" role="listbox" aria-label={label} bind:this={list} style:--rail-count={railCount}>
+      <button class="option random" type="button" role="option" aria-selected={selected === null} style:--i={0} onclick={() => onPick(null)}>
         <span class="random-badge"><Icon name="shuffle" /></span>
-        <span>{randomLabel}</span>
+        <span class="option-label">{randomLabel}</span>
       </button>
       {#each items as item, i (item.id)}
-        <button class="option" type="button" role="option" aria-selected={selected === item.id} style:--i={i + 1} onclick={() => pick(item.id)}>
-          {@render option(item)}
+        <button class="option" type="button" role="option" data-id={item.id} aria-selected={selected === item.id} style:--i={i + 1} onclick={() => onPick(item.id)}>
+          {@render option(item, active && inView.has(item.id))}
           {#if selected === item.id}
             <span class="tick"><Icon name="check" /></span>
           {/if}
         </button>
       {/each}
     </div>
+  {:else}
+    <button class="trigger slot" type="button" aria-haspopup="listbox" aria-expanded={open} aria-label={label} onclick={toggle}>
+      <span class="current">{@render current()}</span>
+      <span class="chevron" class:flipped={open}><Icon name="chevron" /></span>
+    </button>
+
+    {#if open}
+      <div class="panel" role="listbox" aria-label={label} bind:this={list} style:--columns={columns} transition:scale={{ start: 0.9, duration: 220, easing: backOut }}>
+        <button class="option random" type="button" role="option" aria-selected={selected === null} style:--i={0} onclick={() => pick(null)}>
+          <span class="random-badge"><Icon name="shuffle" /></span>
+          <span>{randomLabel}</span>
+        </button>
+        {#each items as item, i (item.id)}
+          <button class="option" type="button" role="option" aria-selected={selected === item.id} style:--i={i + 1} onclick={() => pick(item.id)}>
+            {@render option(item, true)}
+            {#if selected === item.id}
+              <span class="tick"><Icon name="check" /></span>
+            {/if}
+          </button>
+        {/each}
+      </div>
+    {/if}
   {/if}
 </div>
 
@@ -158,6 +217,50 @@
     box-shadow: 0 20px 44px -18px color-mix(in srgb, var(--shadow) 45%, transparent);
     transform-origin: 2rem top;
     overscroll-behavior: contain;
+  }
+
+  .rail {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    gap: 0.6rem;
+    margin: 0 -0.25rem;
+    padding: 0.7rem 0.25rem 0.8rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 0.25rem;
+    scrollbar-width: none;
+    mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent);
+    --card: calc((100% - 0.5rem - (var(--rail-count) - 0.5) * 0.6rem) / var(--rail-count));
+  }
+
+  .rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  .rail .option {
+    flex: 0 0 var(--card);
+    min-width: 0;
+    scroll-snap-align: start;
+  }
+
+  .rail .random {
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.45rem;
+    text-align: center;
+  }
+
+  .rail .random-badge {
+    width: 2.2rem;
+    height: 2.2rem;
+  }
+
+  .option-label {
+    font-size: var(--step--1);
+    line-height: 1.15;
   }
 
   .option {

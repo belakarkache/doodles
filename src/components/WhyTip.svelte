@@ -128,6 +128,12 @@
     }
   }
 
+  @media (max-width: 899px) {
+    .why {
+      position: static;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     button,
     .tip {

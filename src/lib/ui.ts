@@ -23,6 +23,8 @@ export const ui = {
   outlineColor: { pt: 'Cor', en: 'Color' },
   outlineNone: { pt: 'Sem', en: 'None' },
   recipe: { pt: 'Receita da página', en: 'Page recipe' },
+  options: { pt: 'Opções', en: 'Options' },
+  closeOptions: { pt: 'Fechar opções', en: 'Close options' },
   developedBy: { pt: 'desenvolvido por', en: 'developed by' },
   whyTitle: { pt: 'Por que criei o Doodles?', en: 'Why I made Doodles' },
   whyText: {
