@@ -81,6 +81,11 @@ function toHex({ h, s, l }: Hsl): string {
 
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value))
 
+export function shift(hex: string, saturation: number, lightness: number): string {
+  const { h, s, l } = toHsl(hex)
+  return toHex({ h, s: clamp01(s + saturation), l: clamp01(l + lightness) })
+}
+
 export function nudge(hex: string, rng: () => number, spread: Spread): string {
   const offset = (range: number) => (rng() * 2 - 1) * range
   const { h, s, l } = toHsl(hex)

@@ -1,4 +1,4 @@
-import { contourLoops, dropSpecks, sampleField, simplifyLoop, smoothLoop, type Field } from '../contours'
+import { contourLoops, dropSpecks, nestLoops, sampleField, simplifyLoop, smoothLoop, type Field } from '../contours'
 import { fmt, polylinePath, TAU, type Vec } from '../geometry'
 import { HEIGHT, LINE, WIDTH } from './context'
 
@@ -56,12 +56,22 @@ export function bulge(cx: number, cy: number, radius: number, strength: number) 
   }
 }
 
-export function sunburst(cx: number, cy: number, rays: number, color: string): string {
-  const wedges: string[] = []
+function fillGroups(groups: string[][], colors: string[]): string {
+  return groups.map((group, k) => (group.length > 0 ? fill(group.join(' '), colors[k]) : '')).join('')
+}
+
+export function paint(rng: () => number, loops: Vec[][], colors: string[]): string {
+  const groups = colors.map(() => [] as string[])
+  for (const shape of nestLoops(loops)) groups[Math.floor(rng() * colors.length)].push(loopsD(shape))
+  return fillGroups(groups, colors)
+}
+
+export function sunburst(cx: number, cy: number, rays: number, colors: string[]): string {
+  const wedges = colors.map(() => [] as string[])
   for (let i = 0; i < rays; i += 2) {
     const a = (i / rays) * TAU
     const b = ((i + 1) / rays) * TAU
-    wedges.push(`M${fmt(cx)} ${fmt(cy)} L${fmt(cx + 900 * Math.cos(a))} ${fmt(cy + 900 * Math.sin(a))} L${fmt(cx + 900 * Math.cos(b))} ${fmt(cy + 900 * Math.sin(b))} Z`)
+    wedges[(i / 2) % colors.length].push(`M${fmt(cx)} ${fmt(cy)} L${fmt(cx + 900 * Math.cos(a))} ${fmt(cy + 900 * Math.sin(a))} L${fmt(cx + 900 * Math.cos(b))} ${fmt(cy + 900 * Math.sin(b))} Z`)
   }
-  return fill(wedges.join(' '), color)
+  return fillGroups(wedges, colors)
 }

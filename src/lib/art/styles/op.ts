@@ -1,5 +1,5 @@
-import { bulge, circleD, clipPath, clipped, fill, ink, levelLines, loopsD, polyD, range, rect, regions, type Art } from '../draw'
-import { color, HEIGHT, WIDTH, type ArtContext } from '../context'
+import { bulge, circleD, clipPath, clipped, fill, ink, levelLines, loopsD, paint, polyD, range, rect, regions, type Art } from '../draw'
+import { color, except, HEIGHT, WIDTH, type ArtContext } from '../context'
 import { flower, motifShapes } from '../shapes'
 import { vec } from '../../geometry'
 import { between, intBetween, pick, shuffle } from '../../random'
@@ -23,10 +23,11 @@ export function checkerBulge(ctx: ArtContext): Art {
     for (const warp of warps) p = warp(p[0], p[1])
     return checker(p[0] * Math.cos(angle) + p[1] * Math.sin(angle), -p[0] * Math.sin(angle) + p[1] * Math.cos(angle), size)
   })
-  const cells = loopsD(regions(field))
+  const loops = regions(field)
+  const cells = loopsD(loops)
   const defs = spheres.map(([x, y, r], i) => clipPath(`${uid}-s${i}`, circleD(x, y, r * 0.95))).join('')
   const inner = spheres.map((_, i) => clipped(`${uid}-s${i}`, rect(color(ctx, 3)) + fill(cells, color(ctx, 2)))).join('')
-  return { background: color(ctx, 1), body: fill(cells, color(ctx, 0)) + inner + ink(cells, pens.line, 3.6), defs }
+  return { background: color(ctx, 1), body: paint(rng, loops, except(ctx, 1, 2, 3)) + inner + ink(cells, pens.line, 3.6), defs }
 }
 
 export function stripeInversion(ctx: ArtContext): Art {
@@ -39,7 +40,7 @@ export function stripeInversion(ctx: ArtContext): Art {
   const inside = hand.field((x, y) => Math.sin(((x + amp * Math.sin(y * freq)) / period) * Math.PI))
   return {
     background: ctx.pens.background,
-    body: fill(loopsD(regions(outside)), color(ctx, 0)) + clipped(`${uid}-m`, rect(color(ctx, 3)) + fill(loopsD(regions(inside)), color(ctx, 2))),
+    body: paint(rng, regions(outside), except(ctx, 2, 3)) + clipped(`${uid}-m`, rect(color(ctx, 3)) + fill(loopsD(regions(inside)), color(ctx, 2))),
     defs: clipPath(`${uid}-m`, polyD(shape)),
   }
 }
@@ -52,8 +53,8 @@ export function interference(ctx: ArtContext): Art {
   const field = hand.field(
     (x, y) => Math.sin((Math.hypot(x - a.x, y - a.y) / period) * Math.PI) * Math.sin((Math.hypot(x - b.x, y - b.y) / period) * Math.PI),
   )
-  const cells = loopsD(regions(field))
-  return { background: color(ctx, 1), body: fill(cells, color(ctx, 0)) + ink(cells, pens.line, 3.4) }
+  const loops = regions(field)
+  return { background: color(ctx, 1), body: paint(rng, loops, except(ctx, 1)) + ink(loopsD(loops), pens.line, 3.4) }
 }
 
 export function twist(ctx: ArtContext): Art {
@@ -68,8 +69,8 @@ export function twist(ctx: ArtContext): Art {
     const t = Math.atan2(y - cy, x - cx) + r * turn
     return Math.sin((r / ring) * Math.PI) * Math.sin((t * sectors) / 2)
   })
-  const cells = loopsD(regions(field, 0, 1.5))
-  return { background: color(ctx, 1), body: fill(cells, color(ctx, 0)) + ink(cells, pens.line, 3.4) }
+  const loops = regions(field, 0, 1.5)
+  return { background: color(ctx, 1), body: paint(rng, loops, except(ctx, 1)) + ink(loopsD(loops), pens.line, 3.4) }
 }
 
 export function groovy(ctx: ArtContext): Art {
@@ -83,11 +84,12 @@ export function groovy(ctx: ArtContext): Art {
     [105, 280],
     [225, 335],
   ]).slice(0, intBetween(rng, 2, 3))
-  const flowers = spots.map(([x, y]) => {
+  const petals = spots.map((_, i) => 2 + i)
+  const flowers = spots.map(([x, y], i) => {
     const r = between(rng, 48, 66)
-    return fill(polyD(hand.points(flower(rng, x, y, r))), color(ctx, 2)) + fill(circleD(x, y, r * 0.3), color(ctx, 3))
+    return fill(polyD(hand.points(flower(rng, x, y, r))), color(ctx, petals[i])) + fill(circleD(x, y, r * 0.3), color(ctx, petals[i] + 1))
   })
-  return { background: color(ctx, 1), body: fill(loopsD(regions(field)), color(ctx, 0)) + flowers.join('') }
+  return { background: color(ctx, 1), body: paint(rng, regions(field), except(ctx, 1, ...petals)) + flowers.join('') }
 }
 
 export function waves(ctx: ArtContext): Art {

@@ -22,6 +22,8 @@ export type ArtContext = {
   outlines: OutlineMode
 }
 
+const rotate = (items: string[], by: number) => [...items.slice(by), ...items.slice(0, by)]
+
 const boldest = (colors: string[], paper: string) =>
   colors.reduce((a, b) => (distance(b, paper) > distance(a, paper) ? b : a))
 
@@ -29,7 +31,7 @@ export function pensFor(combo: Combination, outlines: OutlineMode): Pens {
   const rng = rngFor(combo.seeds.colors, 41)
   const { background, line, colors } = combo.palette
   const blackPen = rng() < 0.15 && outlines !== 'color' && !isDark(background)
-  const shuffled = shuffle(rng, colors)
+  const shuffled = combo.palette.theme.spectrum ? rotate(colors, Math.floor(rng() * colors.length)) : shuffle(rng, colors)
   if (outlines === 'color') return { background, line: boldest(colors, background), colors: shuffled, blackPen }
   return { background, line: blackPen ? BLACK : line, colors: shuffled, blackPen }
 }
@@ -49,4 +51,14 @@ export function createContext(combo: Combination, uid: string, outlines: Outline
 export function color(ctx: ArtContext, index: number): string {
   const { colors } = ctx.pens
   return colors[((index % colors.length) + colors.length) % colors.length]
+}
+
+export function spectrum(ctx: ArtContext, from: number): string[] {
+  return ctx.pens.colors.map((_, i) => color(ctx, from + i))
+}
+
+export function except(ctx: ArtContext, ...skip: number[]): string[] {
+  const taken = skip.map((index) => color(ctx, index))
+  const rest = ctx.pens.colors.filter((c) => !taken.includes(c))
+  return rest.length > 0 ? rest : [color(ctx, 0)]
 }

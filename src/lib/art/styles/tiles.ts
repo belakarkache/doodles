@@ -101,6 +101,8 @@ function daisy(painter: Painter, center: Vec, s: number, petals: string, core: s
   return shape(painter, roundFlower(center, s * 0.43, 5, tilt), petals) + shape(painter, circle(center, s * 0.15), core)
 }
 
+const at = <T>(items: T[], { i, j }: Cell, k = 0): T => items[(i + j * 12 + k) % items.length]
+
 function checkerboard(painter: Painter, cells: Cell[], tileColor: (cell: Cell) => string | null): string {
   return cells
     .map((cell) => {
@@ -112,18 +114,20 @@ function checkerboard(painter: Painter, cells: Cell[], tileColor: (cell: Cell) =
 
 function sprigs(painter: Painter, cells: Cell[], light: string, dark: string, tints: string[]): string {
   const tiles = checkerboard(painter, cells, (cell) => (cell.even ? dark : null))
-  const motifs = cells.map(({ center, size, even, i }) => {
-    const tint = tints[i % 2]
+  const motifs = cells.map((cell) => {
+    const { center, size, even } = cell
+    const tint = at(tints, cell)
     return even ? daisy(painter, center, size, light, tint, -Math.PI / 2) : sprig(painter, center, size, tint)
   })
   return tiles + motifs.join('')
 }
 
-function inverted(rng: Rng, painter: Painter, cells: Cell[], light: string, dark: string): string {
+function inverted(rng: Rng, painter: Painter, cells: Cell[], light: string, dark: string, tints: string[]): string {
   const petals = intBetween(rng, 5, 7)
   const tiles = checkerboard(painter, cells, (cell) => (cell.even ? dark : null))
-  const flowers = cells.map(({ center, size, even }) => {
-    const [bloom, ground] = even ? [light, dark] : [dark, light]
+  const flowers = cells.map((cell) => {
+    const { center, size, even } = cell
+    const [bloom, ground] = even ? [light, dark] : [at(tints, cell), light]
     return shape(painter, wonkyFlower(rng, center, size * 0.4, petals), bloom) + shape(painter, circle(center, size * 0.05, 16), ground)
   })
   return tiles + flowers.join('')
@@ -150,9 +154,11 @@ function sparse(rng: Rng, painter: Painter, cells: Cell[], darks: string[], colo
   const tiles = checkerboard(painter, cells, (cell) => (cell.even ? null : darks[cell.j % darks.length]))
   const motifs = cells
     .filter((cell) => cell.even)
-    .map(({ center, size, i }, k) => {
-      if (hearts) return shape(painter, motifShapes.heart(rng, center.x, center.y + size * 0.03, size * 0.24), colors[0])
-      const [petals, core] = (i + k) % 2 === 0 ? [colors[0], colors[1]] : [colors[1], colors[0]]
+    .map((cell) => {
+      const { center, size } = cell
+      const petals = at(colors, cell)
+      if (hearts) return shape(painter, motifShapes.heart(rng, center.x, center.y + size * 0.03, size * 0.24), petals)
+      const core = at(colors, cell, 1)
       return daisy(painter, center, size * 0.85, petals, core, between(rng, 0, TAU))
     })
   return tiles + motifs.join('')
@@ -160,16 +166,19 @@ function sparse(rng: Rng, painter: Painter, cells: Cell[], darks: string[], colo
 
 function circles(painter: Painter, cells: Cell[], light: string, colors: string[]): string {
   return cells
-    .map(({ center, size, even }) => {
-      const disc = shape(painter, circle(center, size * 0.47), even ? colors[0] : colors[1])
-      if (even) return disc + daisy(painter, center, size * 0.82, light, colors[2], -Math.PI / 2)
+    .map((cell) => {
+      const { center, size, even } = cell
+      const tint = (k: number) => at(colors, cell, k)
+      const leafy = colors.length > 2 ? 2 : 1
+      const disc = shape(painter, circle(center, size * 0.47), tint(0))
+      if (even) return disc + daisy(painter, center, size * 0.82, light, tint(1), -Math.PI / 2)
       const base = vec(center.x, center.y + size * 0.36)
       const leaves = [-1, 1].map((side) => leaf(base, vec(center.x + side * 0.3 * size, center.y + size * 0.18), side * 0.09 * size))
       return (
         disc +
-        shape(painter, stem(vec(center.x, center.y + size * 0.42), vec(center.x, center.y - size * 0.05), size * 0.07), colors[3]) +
-        leaves.map((l) => shape(painter, l, colors[3])).join('') +
-        shape(painter, tulip(center, size), colors[2])
+        shape(painter, stem(vec(center.x, center.y + size * 0.42), vec(center.x, center.y - size * 0.05), size * 0.07), tint(leafy)) +
+        leaves.map((l) => shape(painter, l, tint(leafy))).join('') +
+        shape(painter, tulip(center, size), tint(1))
       )
     })
     .join('')
@@ -182,14 +191,13 @@ export function tiles(ctx: ArtContext): Art {
   const contrast = (c: string) => Math.abs(luminance(c) - luminance(light))
   const ranked = pens.colors.filter((c) => c !== pens.line && c !== light).sort((a, b) => contrast(b) - contrast(a))
   const tone = (k: number) => ranked[Math.min(k, ranked.length - 1)]
-  const faintest = ranked[ranked.length - 1]
   const cells = grid(rng)
   const variant = pick(rng, ['sprigs', 'inverted', 'sparse', 'circles'] as const)
   const body = {
-    sprigs: () => sprigs(painter, cells, light, tone(0), [tone(1), tone(2)]),
-    inverted: () => inverted(rng, painter, cells, light, rng() < 0.5 ? pens.line : tone(0)),
-    sparse: () => sparse(rng, painter, cells, rng() < 0.6 ? [tone(2), tone(3)] : [tone(2)], [tone(0), tone(1)]),
-    circles: () => circles(painter, cells, light, [tone(0), faintest, tone(1), tone(2)]),
+    sprigs: () => sprigs(painter, cells, light, tone(0), ranked.length > 1 ? ranked.slice(1) : ranked),
+    inverted: () => inverted(rng, painter, cells, light, rng() < 0.5 ? pens.line : tone(0), ranked.slice(0, Math.max(1, ranked.length - 1))),
+    sparse: () => sparse(rng, painter, cells, rng() < 0.6 ? [tone(2), tone(3)] : [tone(2)], [tone(0), tone(1), ...ranked.slice(4)]),
+    circles: () => circles(painter, cells, light, ranked),
   }[variant]()
   return { background: light, body }
 }

@@ -37,14 +37,16 @@
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    gap: clamp(8px, 1.6vw, 16px);
+    gap: clamp(6px, 1.6vw, 16px);
+    max-width: 100%;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
   li {
-    width: var(--marker-w, clamp(24px, 2.7vw, 36px));
+    flex: 0 1 var(--marker-w, clamp(24px, 2.7vw, 36px));
+    min-width: 0;
     transform: translateY(var(--nudge)) rotate(var(--tilt));
     transform-origin: 50% 100%;
     filter: drop-shadow(0 4px 3px rgb(60 55 48 / 0.2)) drop-shadow(0 1px 1px rgb(60 55 48 / 0.18));
@@ -57,7 +59,7 @@
   }
 
   .fineliner {
-    width: calc(var(--marker-w, clamp(24px, 2.7vw, 36px)) * 0.5);
+    flex-basis: calc(var(--marker-w, clamp(24px, 2.7vw, 36px)) * 0.5);
   }
 
   svg {

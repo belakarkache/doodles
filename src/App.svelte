@@ -8,7 +8,7 @@
   import Picker from './components/Picker.svelte'
   import RecipeRow from './components/RecipeRow.svelte'
   import Reel from './components/Reel.svelte'
-  import { pensFor, renderArt } from './lib/art'
+  import { inkedIn, pensFor, renderArt } from './lib/art'
   import { styles, type StyleId } from './lib/data/catalog'
   import { paletteThemes, type PaletteTheme } from './lib/data/palettes'
   import { combine } from './lib/generator'
@@ -24,8 +24,6 @@
 
   const combo = $derived(combine(app.seeds, app.style, app.palette))
   const pens = $derived(pensFor(combo, app.outlines))
-  const separateLine = $derived(!pens.blackPen && !pens.colors.includes(pens.line))
-  const markers = $derived(separateLine ? [pens.line, ...pens.colors, pens.background] : [...pens.colors, pens.background])
   const outlineModes = [
     { mode: 'ink', label: ui.outlineInk },
     { mode: 'color', label: ui.outlineColor },
@@ -37,6 +35,10 @@
   const theme = $derived(themeFor(pens.colors))
 
   const art = $derived(renderArt(combo, app.outlines))
+  const separateLine = $derived(!pens.blackPen && !pens.colors.includes(pens.line))
+  const inked = $derived(inkedIn(art))
+  const markers = $derived((separateLine ? [pens.line, ...pens.colors, pens.background] : [...pens.colors, pens.background]).filter(inked))
+  const blackPen = $derived(pens.blackPen && inked(pens.line))
   const artLabel = $derived(combo.motif ? `${tr(combo.style.name)}, ${tr(combo.motif.name)}` : tr(combo.style.name))
 
   $effect(() => {
@@ -230,7 +232,7 @@
       </section>
 
       <div class="pens">
-        <Markers colors={markers} blackPen={pens.blackPen} />
+        <Markers colors={markers} {blackPen} />
       </div>
     </div>
 

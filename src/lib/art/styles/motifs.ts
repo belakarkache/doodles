@@ -1,5 +1,5 @@
 import { circleD, clipPath, clipped, fill, ink, levelLines, loopsD, polyD, range, rect, sunburst, type Art } from '../draw'
-import { color, HEIGHT, WIDTH, type ArtContext } from '../context'
+import { color, HEIGHT, spectrum, WIDTH, type ArtContext } from '../context'
 import { motifShapes, signedDistance } from '../shapes'
 import { vec } from '../../geometry'
 import { between, pick } from '../../random'
@@ -44,7 +44,7 @@ export function pop(ctx: ArtContext): Art {
   return {
     background: pens.background,
     body:
-      sunburst(WIDTH / 2, HEIGHT / 2, pick(rng, [16, 20, 24]), color(ctx, 1)) +
+      sunburst(WIDTH / 2, HEIGHT / 2, pick(rng, [16, 20, 24]), spectrum(ctx, 1)) +
       fill(polyD(shadow), pens.line) +
       clipped(`${uid}-m`, rect(color(ctx, 0)) + fill(dots.join(' '), color(ctx, 2))) +
       ink(polyD(shape), pens.line, 5.5),

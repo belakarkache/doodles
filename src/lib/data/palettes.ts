@@ -1,6 +1,13 @@
 import type { Text } from '../i18n.svelte'
 
-export type PaletteTheme = { id: string; name: Text; backgrounds: string[]; lines: string[]; colors: string[] }
+export type PaletteTheme = {
+  id: string
+  name: Text
+  backgrounds: string[]
+  lines: string[]
+  colors: string[]
+  spectrum?: boolean
+}
 
 const theme = (id: string, pt: string, en: string, backgrounds: string, lines: string, colors: string): PaletteTheme => ({
   id,
@@ -243,4 +250,15 @@ export const paletteThemes: PaletteTheme[] = [
     '#1d1c1f #161616',
     '#1d1c1f #2f8f46 #9fd39d #f5c518 #fbe38a',
   ),
+  {
+    ...theme(
+      'rainbow',
+      'Arco-íris',
+      'Rainbow',
+      '#fbfaf7 #f6f4ee #1c1b22',
+      '#1d1c1f #2b2b33 #f7f5ff',
+      '#e8333c #f7842a #f9d23c #4cb84c #2f8fd8 #4b4fb8 #9a4fc4',
+    ),
+    spectrum: true,
+  },
 ]

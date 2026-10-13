@@ -1,6 +1,6 @@
 import type { PaletteTheme } from './data/palettes'
-import { intBetween, pick, shuffle, type Rng } from './random'
-import { contrastRatio, distance, nudge, type Spread } from './theme'
+import { between, intBetween, pick, shuffle, type Rng } from './random'
+import { contrastRatio, distance, isDark, nudge, shift, type Spread } from './theme'
 
 export type Palette = { theme: PaletteTheme; background: string; line: string; colors: string[] }
 
@@ -32,10 +32,25 @@ function distinctColors(pool: string[], paper: string, count: number, rng: Rng):
   return candidates.slice(0, count)
 }
 
+function apartFrom(paper: string, color: string): string {
+  const step = isDark(paper) ? 0.04 : -0.04
+  let moved = color
+  for (let k = 0; k < 12 && distance(moved, paper) < APART_FROM_PAPER * 1.5; k++) moved = shift(moved, 0, step)
+  return moved
+}
+
+function spectrumColors(pool: string[], paper: string, rng: Rng): string[] {
+  const saturation = between(rng, -0.3, 0.05)
+  const lightness = between(rng, -0.08, 0.16)
+  return pool.map((color) => apartFrom(paper, shift(color, saturation, lightness)))
+}
+
 export function paletteFrom(theme: PaletteTheme, rng: Rng): Palette {
   const background = pick(rng, theme.backgrounds)
   const line = lineFor(background, theme.lines, rng)
-  const colors = distinctColors(theme.colors, background, intBetween(rng, 4, 5), rng)
+  const colors = theme.spectrum
+    ? spectrumColors(theme.colors, background, rng)
+    : distinctColors(theme.colors, background, intBetween(rng, 5, 7), rng)
   return {
     theme,
     background: nudge(background, rng, PAPER),

@@ -1,6 +1,6 @@
 import { add, catmullRom, fmt, normalize, perpendicular, pt, scale, sub, vec, type Vec } from '../../geometry'
 import { between, intBetween, pick, type Rng } from '../../random'
-import { color, HEIGHT, WIDTH, type ArtContext } from '../context'
+import { color, HEIGHT, spectrum, WIDTH, type ArtContext } from '../context'
 import { bulge, circleD, clipPath, clipped, fill, ink, loopsD, polyD, rect, regions, sunburst, type Art } from '../draw'
 import { flower, leaf } from '../shapes'
 
@@ -115,7 +115,7 @@ function plants(ctx: ArtContext, vase: Vase, kind: string): string {
   const { rng, pens } = ctx
   const { mouth, lip } = vase
   const parts: string[] = []
-  const leafColor = (i: number) => (i % 2 ? color(ctx, 0) : color(ctx, 2))
+  const leafColor = (i: number) => color(ctx, i * 2)
   if (kind === 'flowers') {
     const count = intBetween(rng, 1, 3)
     for (let i = 0; i < count; i++) {
@@ -126,7 +126,7 @@ function plants(ctx: ArtContext, vase: Vase, kind: string): string {
       const leafAt = vec((bend.x + head.x) / 2 + (spread >= 0 ? 16 : -16), (bend.y + head.y) / 2 + 14)
       const petals = color(ctx, i + 1)
       const bloom = rng() < 0.6 ? daisy(ctx, head, between(rng, 32, 42), petals, color(ctx, i + 2)) : tulip(ctx, head, between(rng, 30, 38), petals)
-      parts.push(ink(stem, pens.line, 4.4) + ink(polyD(leaf(rng, leafAt.x, leafAt.y, 22)), pens.line, 3.8, color(ctx, 2)) + bloom)
+      parts.push(ink(stem, pens.line, 4.4) + ink(polyD(leaf(rng, leafAt.x, leafAt.y, 22)), pens.line, 3.8, color(ctx, i + 4)) + bloom)
     }
     return parts.join('')
   }
@@ -152,8 +152,8 @@ function plants(ctx: ArtContext, vase: Vase, kind: string): string {
 }
 
 function arches(ctx: ArtContext, cx: number, cy: number): string {
-  return [3, 2, 1, 0]
-    .map((i) => ink(circleD(cx, cy, 70 + i * 36), ctx.pens.line, 4, color(ctx, i)))
+  return [4, 3, 2, 1, 0]
+    .map((i) => ink(circleD(cx, cy, 70 + i * 36), ctx.pens.line, 4, color(ctx, i + 2)))
     .join('')
 }
 
@@ -165,7 +165,7 @@ export function vase(ctx: ArtContext): Art {
   const shape = vaseShape(rng, WIDTH / 2, ground, kind === 'flowers' ? between(rng, 150, 180) : between(rng, 120, 145), between(rng, 130, 165))
   const outline = hand.points(shape.outline)
   const pattern = vasePattern(ctx, ground - 70)
-  const back = rng() < 0.5 ? sunburst(WIDTH / 2, shape.mouth.y - 40, 24, color(ctx, 3)) : arches(ctx, WIDTH / 2, ground)
+  const back = rng() < 0.5 ? sunburst(WIDTH / 2, shape.mouth.y - 40, 24, spectrum(ctx, 3)) : arches(ctx, WIDTH / 2, ground)
   const rx = shape.lip
   const ry = shape.lip * RIM_SQUASH
   const mouthY = shape.mouth.y

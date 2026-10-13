@@ -1,7 +1,7 @@
 import { fmt, pt, TAU, vec, type Vec } from '../../geometry'
 import { between, intBetween, pick, shuffle } from '../../random'
-import { color, HEIGHT, WIDTH, type ArtContext } from '../context'
-import { bulge, circleD, clipPath, clipped, fill, ink, loopsD, polyD, range, rect, regions, sunburst, type Art } from '../draw'
+import { color, HEIGHT, spectrum, WIDTH, type ArtContext } from '../context'
+import { bulge, circleD, clipPath, clipped, fill, ink, loopsD, paint, polyD, range, rect, regions, sunburst, type Art } from '../draw'
 import { eye as eyeShape, lips as lipsShape, motifShapes, mushroom } from '../shapes'
 
 function sparkleAt(ctx: ArtContext, x: number, y: number, r: number, fillColor: string): string {
@@ -11,7 +11,7 @@ function sparkleAt(ctx: ArtContext, x: number, y: number, r: number, fillColor: 
 function backdrop(ctx: ArtContext, focusY: number): string {
   const { rng } = ctx
   const kind = pick(rng, ['rays', 'arches', 'stripes'])
-  if (kind === 'rays') return sunburst(WIDTH / 2, focusY, pick(rng, [18, 22, 26]), color(ctx, 3))
+  if (kind === 'rays') return sunburst(WIDTH / 2, focusY, pick(rng, [18, 22, 26]), spectrum(ctx, 3))
   if (kind === 'arches') {
     return [4, 3, 2, 1]
       .map((i) => ink(circleD(WIDTH / 2, HEIGHT + 20, 90 + i * 60), ctx.pens.line, 4, color(ctx, i + 1)))
@@ -20,7 +20,7 @@ function backdrop(ctx: ArtContext, focusY: number): string {
   const period = between(rng, 24, 30)
   const amp = between(rng, 6, 12)
   const field = ctx.hand.field((x, y) => Math.sin(((y + amp * Math.sin(x * 0.03)) / period) * Math.PI))
-  return fill(loopsD(regions(field)), color(ctx, 3))
+  return paint(rng, regions(field), spectrum(ctx, 3))
 }
 
 function capPattern(ctx: ArtContext, cx: number, cy: number, r: number, base: string, accent: string): string {
@@ -183,7 +183,7 @@ export function lips(ctx: ArtContext): Art {
     const angle = (i / 16) * TAU
     return `M${pt(vec(cx + Math.cos(angle) * r * 1.25, cy + Math.sin(angle) * r * 1.05))} L${pt(vec(cx + Math.cos(angle) * r * 1.45, cy + Math.sin(angle) * r * 1.25))}`
   })
-  const background = rng() < 0.5 ? sunburst(cx, cy, 20, color(ctx, 2)) : ink(rays.join(' '), pens.line, 5)
+  const background = rng() < 0.5 ? sunburst(cx, cy, 20, spectrum(ctx, 2)) : ink(rays.join(' '), pens.line, 5)
   return {
     background: pens.background,
     body:

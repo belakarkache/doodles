@@ -40,13 +40,19 @@ export function spiderweb(ctx: ArtContext): Art {
   const strands = radii.map((_, k) => angles.map((_, i) => strand(i, k)))
   const withBackground = rng() < 0.5
   const cells: string[] = []
+  const tones: string[][] = []
   for (let k = 0; k < radii.length - 1; k++) {
+    const ring: string[] = []
     strands[k].forEach((inner, i) => {
       const outer = strands[k + 1][i]
       const even = (i + k) % 2 === 0
-      const cellColor = even ? color(ctx, k % 2 ? 0 : 2) : withBackground ? pens.background : color(ctx, k % 2 ? 1 : 3)
-      cells.push(fill(polyD([...inner, ...[...outer].reverse()]), cellColor))
+      const taken = [ring[i - 1], tones[k - 1]?.[i], i === spokes - 1 ? ring[0] : undefined]
+      const start = i + k + (even ? 0 : 2)
+      const offset = pens.colors.findIndex((_, s) => !taken.includes(color(ctx, start + s)))
+      ring.push(!even && withBackground ? pens.background : color(ctx, start + Math.max(0, offset)))
+      cells.push(fill(polyD([...inner, ...[...outer].reverse()]), ring[i]))
     })
+    tones.push(ring)
   }
   const hub = fill(polyD(strands[0].flat()), color(ctx, 1))
   const rings = strands.map((ring) => polyD(ring.flat())).join(' ')

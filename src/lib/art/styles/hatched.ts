@@ -135,11 +135,11 @@ export function hatched(ctx: ArtContext): Art {
   const ranked = pens.colors.filter((c) => c !== pens.line && c !== paper).sort((a, b) => contrast(b) - contrast(a))
   const legible = ranked.filter((c) => contrast(c) >= 2.5)
   const colors = legible.length >= 2 ? legible : ranked.slice(0, 2)
-  const mono = rng() < 0.3
+  const mono = rng() < 0.15
   const tones = (): Tones => {
-    if (mono) return { hatched: paper, solid: colors[colors.length - 1] }
+    if (mono) return { hatched: paper, solid: pick(rng, colors) }
     const hatchedTone = pick(rng, colors)
-    return { hatched: hatchedTone, solid: pick(rng, colors.filter((c) => c !== hatchedTone).concat(paper)) }
+    return { hatched: hatchedTone, solid: pick(rng, ranked.filter((c) => c !== hatchedTone).concat(paper)) }
   }
   const cells = grid(rng)
   const turn = turnRule(rng)

@@ -38,6 +38,11 @@ const renderers: Record<StyleId, (ctx: ArtContext) => Art> = {
 
 let counter = 0
 
+export function inkedIn(svg: string): (color: string) => boolean {
+  const used = new Set(svg.match(/"#[0-9a-f]{6}"/g))
+  return (color) => used.has(`"${color}"`)
+}
+
 export function renderArt(combo: Combination, outlines: OutlineMode = 'ink'): string {
   const uid = `art${counter++}`
   const ctx = createContext(combo, uid, outlines)

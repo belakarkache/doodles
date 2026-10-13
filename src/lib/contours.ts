@@ -135,6 +135,43 @@ export function dropSpecks(loops: Vec[][], gap: number): Vec[][] {
   })
 }
 
+function encloses(loop: Vec[], p: Vec): boolean {
+  let inside = false
+  for (let i = 0, j = loop.length - 1; i < loop.length; j = i++) {
+    const a = loop[i]
+    const b = loop[j]
+    if (a.y > p.y !== b.y > p.y && p.x < a.x + ((p.y - a.y) * (b.x - a.x)) / (b.y - a.y)) inside = !inside
+  }
+  return inside
+}
+
+function bounds(loop: Vec[]): number[] {
+  const xs = loop.map((p) => p.x)
+  const ys = loop.map((p) => p.y)
+  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]
+}
+
+export function nestLoops(loops: Vec[][]): Vec[][][] {
+  const boxes = loops.map(bounds)
+  const parents = loops.map((loop, i) => {
+    const p = loop[0]
+    return loops.flatMap((other, j) => {
+      const [x0, y0, x1, y1] = boxes[j]
+      return j !== i && p.x >= x0 && p.x <= x1 && p.y >= y0 && p.y <= y1 && encloses(other, p) ? [j] : []
+    })
+  })
+  const shapes = new Map<number, Vec[][]>()
+  parents.forEach((outer, i) => {
+    if (outer.length % 2 === 0) shapes.set(i, [loops[i]])
+  })
+  parents.forEach((outer, i) => {
+    if (outer.length % 2 === 0) return
+    const parent = outer.find((j) => parents[j].length === outer.length - 1)
+    if (parent !== undefined) shapes.get(parent)?.push(loops[i])
+  })
+  return [...shapes.values()]
+}
+
 function offsetFromChord(p: Vec, a: Vec, b: Vec): number {
   const dx = b.x - a.x
   const dy = b.y - a.y
