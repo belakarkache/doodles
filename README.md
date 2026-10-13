@@ -59,4 +59,4 @@ src/
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). Developed by [icka.dev](https://icka.dev).
